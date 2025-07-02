@@ -467,6 +467,8 @@ $welcome_message = "Welcome to CycleBins!";
                     <li><a href="#">Features</a></li>
                     <li><a href="#">How It Works</a></li>
                     <li><a href="#">Testimonials</a></li>
+                    <li><a href="../design_partie_admin/admin.php">Admins</a></li>
+
                 </ul>
             </div>
             <div class="footer-column">

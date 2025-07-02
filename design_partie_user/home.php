@@ -756,7 +756,7 @@ $leaderboard = [
             color: #666;
         }
         
-        .recycle-modal {
+        .bin-request-modal, .recycle-modal {
             display: none;
             position: fixed;
             top: 0;
@@ -769,56 +769,66 @@ $leaderboard = [
             align-items: center;
         }
         
-        .recycle-modal.active {
+        .bin-request-modal.active, .recycle-modal.active {
             display: flex;
         }
         
-        .recycle-form {
+        .bin-request-form, .recycle-form {
             background: white;
             padding: 2rem;
-            border-radius: 12px;
+            border-radius: 15px;
             width: 90%;
-            max-width: 400px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
             animation: fadeIn 0.3s ease;
+            position: relative;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%);
+            border: 1px solid rgba(0, 200, 83, 0.2);
         }
-        
-        .recycle-form h3 {
+
+        .bin-request-form h3, .recycle-form h3 {
             color: var(--secondary);
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .form-group {
-            margin-bottom: 1rem;
+            margin-bottom: 1.2rem;
         }
         
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
             color: var(--dark);
+            font-weight: 500;
         }
         
         .form-group select,
-        .form-group input {
+        .form-group input,
+        .form-group textarea {
             width: 100%;
-            padding: 0.5rem;
-            border: 1px solid var(--gray);
-            border-radius: 4px;
+            padding: 0.75rem;
+            border: 2px solid var(--gray);
+            border-radius: 8px;
             font-size: 1rem;
+            background: #ffffff;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
         
         .form-group select:focus,
-        .form-group input:focus {
+        .form-group input:focus,
+        .form-group textarea:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 5px var(--primary-light);
+            box-shadow: 0 0 10px var(--primary-light);
         }
-        
-        .points-display {
-            margin-top: 1rem;
-            color: var(--primary);
-            font-weight: 600;
+
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
         }
         
         .submit-btn {
@@ -830,10 +840,13 @@ $leaderboard = [
             cursor: pointer;
             transition: all 0.3s ease;
             width: 100%;
+            font-weight: 600;
+            text-transform: uppercase;
         }
         
         .submit-btn:hover {
             background: var(--secondary);
+            transform: translateY(-2px);
         }
         
         .close-btn {
@@ -842,9 +855,22 @@ $leaderboard = [
             right: 1rem;
             background: none;
             border: none;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             color: var(--dark);
             cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            color: #f44336;
+        }
+        
+        .points-display {
+            margin-top: 1rem;
+            color: var(--primary);
+            font-weight: 600;
+            text-align: center;
+            font-size: 1.2rem;
         }
         
         .hidden {
@@ -980,6 +1006,7 @@ $leaderboard = [
                 <li><a href="#rewards"><i class="fas fa-trophy"></i> Rewards</a></li>
                 <li><a href="#statistics"><i class="fas fa-chart-line"></i> Statistics</a></li>
                 <li><a href="#recycling-log"><i class="fas fa-recycle"></i> Recycling Log</a></li>
+                <li><a href="#bin-request"><i class="fas fa-plus"></i> Bin Request</a></li>
                 <li><a href="#challenges"><i class="fas fa-trophy"></i> Challenges</a></li>
                 <li><a href="#leaderboard"><i class="fas fa-crown"></i> Leaderboard</a></li>
             </ul>
@@ -1137,6 +1164,17 @@ $leaderboard = [
                 </div>
             </section>
 
+            <!-- Bin Request Section -->
+            <section id="bin-request">
+                <div class="dashboard-card animate__animated animate__fadeIn">
+                    <div class="card-header">
+                        <h3>Request a New Recycling Bin</h3>
+                    </div>
+                    <p>Enhance recycling accessibility in your area by requesting a new bin location. Please fill out the form below with the proposed location details, and our team will review your submission and contact you shortly to discuss further steps.</p>
+                    <button class="side-request-btn" onclick="showBinRequestForm()">Request</button>
+                </div>
+            </section>
+
             <!-- Challenges Section -->
             <section id="challenges">
                 <div class="dashboard-card animate__animated animate__fadeIn">
@@ -1216,6 +1254,48 @@ $leaderboard = [
             <button onclick="alert('Switch Account clicked')">Switch Account</button>
             <button onclick="alert('Delete Account clicked')" style="color: #f44336;">Delete Account</button>
             <button onclick="window.location.href='index.php'">Logout</button>
+        </div>
+    </div>
+
+    <div class="bin-request-modal" id="binRequestModal">
+        <div class="bin-request-form">
+            <button class="close-btn" onclick="hideBinRequestForm()">×</button>
+            <h3>Submit a Bin Request</h3>
+            <form id="binRequestForm" onsubmit="submitBinRequest(event)">
+                <div class="form-group">
+                    <label for="requestCountry">Country:</label>
+                    <select id="requestCountry" name="requestCountry" required>
+                        <option value="">Select Country</option>
+                        <?php
+                        $countries = array_keys($countries_states_cities);
+                        foreach ($countries as $country) {
+                            echo "<option value='$country'>$country</option>";
+                        }
+                        ?>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="requestState">State/Region:</label>
+                    <select id="requestState" name="requestState" required>
+                        <option value="">Select State/Region</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="requestCity">City:</label>
+                    <select id="requestCity" name="requestCity" required>
+                        <option value="">Select City</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="requestLocation">Specific Location:</label>
+                    <input type="text" id="requestLocation" name="requestLocation" placeholder="e.g., 123 Main Street" required>
+                </div>
+                <div class="form-group">
+                    <label for="requestNotes">Additional Notes:</label>
+                    <textarea id="requestNotes" name="requestNotes" placeholder="Any additional details (e.g., urgency, bin type)"></textarea>
+                </div>
+                <button type="submit" class="submit-btn">Submit Request</button>
+            </form>
         </div>
     </div>
 
@@ -1473,6 +1553,113 @@ $leaderboard = [
 
         // Initial load
         window.addEventListener('load', updateStatesAndCities);
+
+        // Show bin request form
+        function showBinRequestForm() {
+            const modal = document.getElementById('binRequestModal');
+            modal.classList.add('active');
+            updateBinRequestStates();
+        }
+
+        // Hide bin request form
+        function hideBinRequestForm() {
+            const modal = document.getElementById('binRequestModal');
+            modal.classList.remove('active');
+            document.getElementById('binRequestForm').reset();
+        }
+
+        // Update states for bin request form
+        function updateBinRequestStates() {
+            const country = document.getElementById('requestCountry').value;
+            const stateSelect = document.getElementById('requestState');
+            const citySelect = document.getElementById('requestCity');
+            const statesCities = <?php echo json_encode($countries_states_cities); ?>;
+
+            // Clear current options
+            stateSelect.innerHTML = '<option value="">Select State/Region</option>';
+            citySelect.innerHTML = '<option value="">Select City</option>';
+
+            if (country && statesCities[country]) {
+                Object.keys(statesCities[country]).forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state;
+                    option.textContent = state;
+                    stateSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Update cities for bin request form
+        function updateBinRequestCities() {
+            const country = document.getElementById('requestCountry').value;
+            const state = document.getElementById('requestState').value;
+            const citySelect = document.getElementById('requestCity');
+            const statesCities = <?php echo json_encode($countries_states_cities); ?>;
+
+            // Clear current options
+            citySelect.innerHTML = '<option value="">Select City</option>';
+
+            if (country && state && statesCities[country] && statesCities[country][state]) {
+                statesCities[country][state].forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    citySelect.appendChild(option);
+                });
+            }
+        }
+
+        // Submit bin request form
+        function submitBinRequest(event) {
+            event.preventDefault();
+            const country = document.getElementById('requestCountry').value;
+            const state = document.getElementById('requestState').value;
+            const city = document.getElementById('requestCity').value;
+            const location = document.getElementById('requestLocation').value;
+            const notes = document.getElementById('requestNotes').value;
+
+            // Simulate submission (for demo purposes)
+            const request = {
+                country: country,
+                state: state,
+                city: city,
+                location: location,
+                notes: notes
+            };
+            console.log('Bin Request:', request);
+
+            // Hide modal and reset
+            hideBinRequestForm();
+            alert('Thank you for your request! Our team will review it and contact you soon.');
+        }
+
+        // Event listeners for bin request form
+        document.getElementById('requestCountry').addEventListener('change', function() {
+            updateBinRequestStates();
+            updateBinRequestCities();
+        });
+        document.getElementById('requestState').addEventListener('change', updateBinRequestCities);
     </script>
 </body>
 </html>
+<style>
+    .side-request-btn {
+        position: absolute;
+        top: 1rem;
+        right: 2rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        width: auto;
+    }
+
+    .side-request-btn:hover {
+        background: var(--secondary);
+        transform: translateY(-2px);
+    }
+</style>
