@@ -1,153 +1,324 @@
 <?php
-session_start();
-// Placeholder user data - replace with database queries
-$user_name = "Alex Green";
-$user_email = "alex.green@example.com"; // Added email for dialog
-$user_points = 1250;
-$user_level = "Recycling Hero";
-$recent_activity = [
-    ["action" => "Recycled Plastic", "points" => 50, "date" => "2025-06-15"],
-    ["action" => "Recycled Paper", "points" => 30, "date" => "2025-06-14"],
-    ["action" => "Recycled Glass", "points" => 40, "date" => "2025-06-12"],
-    ["action" => "Recycled Aluminum", "points" => 45, "date" => "2025-06-10"],
-    ["action" => "Recycled Cardboard", "points" => 35, "date" => "2025-06-09"],
-    ["action" => "Recycled E-Waste", "points" => 60, "date" => "2025-06-08"],
-    ["action" => "Recycled Textiles", "points" => 25, "date" => "2025-06-07"]
-];
-// Enhanced nearby locations with North African countries, states, and cities
-$nearby_locations = [
-    ["name" => "Casablanca Recycling Center", "time" => "8 AM - 8 PM", "location" => "1.2 km away, 123 Blvd", "image" => "bin1.jpg", "country" => "Morocco", "state" => "Casablanca Settat", "city" => "Casablanca"],
-    ["name" => "Algiers Green Depot", "time" => "9 AM - 6 PM", "location" => "2.5 km away, 456 Rue", "image" => "bin2.jpg", "country" => "Algeria", "state" => "Algiers", "city" => "Algiers"],
-    ["name" => "Tunis Eco Park", "time" => "7 AM - 7 PM", "location" => "3.0 km away, 789 Ave", "image" => "bin3.jpg", "country" => "Tunisia", "state" => "Tunis", "city" => "Tunis"],
-    ["name" => "Tripoli Reuse Center", "time" => "10 AM - 5 PM", "location" => "4.2 km away, 101 St", "image" => "bin4.jpg", "country" => "Libya", "state" => "Tripoli", "city" => "Tripoli"],
-    ["name" => "Cairo Recycling Hub", "time" => "8 AM - 7 PM", "location" => "5.0 km away, 202 Rd", "image" => "bin5.jpg", "country" => "Egypt", "state" => "Cairo", "city" => "Cairo"],
-    ["name" => "Khartoum Green Point", "time" => "9 AM - 6 PM", "location" => "3.8 km away, 303 St", "image" => "bin6.jpg", "country" => "Sudan", "state" => "Khartoum", "city" => "Khartoum"],
-    ["name" => "Laayoune Recycle Depot", "time" => "8 AM - 8 PM", "location" => "1.5 km away, 404 Blvd", "image" => "bin7.jpg", "country" => "Western Sahara", "state" => "Laâyoune Sakia El Hamra", "city" => "Laayoune"],
-    ["name" => "Nouakchott Eco Center", "time" => "9 AM - 6 PM", "location" => "2.0 km away, 505 Ave", "image" => "bin8.jpg", "country" => "Mauritania", "state" => "Nouakchott Nord", "city" => "Nouakchott"],
-    ["name" => "Juba Sustainability Hub", "time" => "7 AM - 7 PM", "location" => "3.2 km away, 606 Rd", "image" => "bin9.jpg", "country" => "South Sudan", "state" => "Central Equatoria", "city" => "Juba"],
-    ["name" => "N'Djamena Recycle Point", "time" => "10 AM - 5 PM", "location" => "4.0 km away, 707 St", "image" => "bin10.jpg", "country" => "Chad", "state" => "N'Djamena", "city" => "N'Djamena"]
-];
-// Define states and cities for all 10 countries
-$countries_states_cities = [
-    "Morocco" => [
-        "Casablanca Settat" => ["Casablanca", "Mohammedia", "Settat", "Berrechid", "El Jadida"],
-        "Marrakesh Safi" => ["Marrakesh", "Safi", "Essaouira", "Youssoufia", "Kelaa des Sraghna"],
-        "Fès Meknès" => ["Fès", "Meknès", "Taza", "Sefrou", "Ifrane"],
-        "Tangier Tetouan Al Hoceima" => ["Tangier", "Tetouan", "Al Hoceima", "Larache", "Chefchaouen"],
-        "Rabat Salé Kénitra" => ["Rabat", "Salé", "Kénitra", "Skhirat-Témara", "Sidi Kacem"],
-        "Béni Mellal Khénifra" => ["Béni Mellal", "Khénifra", "Azilal"],
-        "Drâa Tafilalet" => ["Errachidia", "Ouarzazate", "Zagora"],
-        "Souss Massa" => ["Agadir", "Inezgane", "Tiznit"],
-        "Guelmim Oued Noun" => ["Guelmim", "Tan Tan", "Sidi Ifni"],
-        "Laâyoune Sakia El Hamra" => ["Laayoune", "Boujdour", "Tarfaya"],
-        "Dakhla Oued Ed Dahab" => ["Dakhla", "Oued Ed Dahab", "Bir Gandouz"]
-    ],
-    "Algeria" => [
-        "Algiers" => ["Algiers", "Birkhadem", "Bab El Oued", "Hussein Dey", "Kouba"],
-        "Oran" => ["Oran", "Arzew", "Bir El Djir", "Aïn El Turk", "Es Senia"],
-        "Constantine" => ["Constantine", "Hamma Bouziane", "El Khroub", "Zighoud Youcef", "Aïn Smara"],
-        "Annaba" => ["Annaba", "El Bouni", "Seraidi", "El Hadjar", "Berrahal"],
-        "Tizi Ouzou" => ["Tizi Ouzou", "Azazga", "Boghni", "Draâ Ben Khedda", "Mekla"],
-        "Batna" => ["Batna", "Merouana", "Timgad", "Aïn Touta"],
-        "Béjaïa" => ["Béjaïa", "Amizour", "Kherrata", "Sidi Aïch"],
-        "Biskra" => ["Biskra", "Sidi Okba", "El Kantara"],
-        "Blida" => ["Blida", "Boufarik", "Bouïnane", "Oued El Alleug"],
-        "Oran-extended" => ["Saïda", "Mascara", "Tlemcen", "Sidi Bel Abbès", "Mostaganem"],
-        "Setif" => ["Setif", "El Eulma", "Aïn Oulmene"],
-        "Djelfa" => ["Djelfa", "Aïn Oussera", "Messâad"],
-        "Ghardaïa" => ["Ghardaïa", "Metlili", "El Menea"],
-        "Tamanrasset" => ["Tamanrasset", "In Salah", "In Guezzam"]
-    ],
-    "Tunisia" => [
-        "Tunis" => ["Tunis", "La Goulette", "Carthage", "Sidi Bou Said", "Le Bardo"],
-        "Ariana" => ["Ariana", "Raoued", "Mnihla", "Ettadhamen"],
-        "Ben Arous" => ["Ben Arous", "El Mourouj", "Rades", "Hammam Lif"],
-        "Manouba" => ["Manouba", "Douar Hicher", "Mornag", "Tebourba"],
-        "Bizerte" => ["Bizerte", "Menzel Bourguiba", "Mateur", "Sejnane"],
-        "Nabeul" => ["Nabeul", "Hammamet", "Kélibia", "Dar Chaabane", "Grombalia"],
-        "Béja" => ["Béja", "Testour", "Nefza", "Téboursouk"],
-        "Jendouba" => ["Jendouba", "Tabarka", "Ghardimaou", "Aïn Draham"],
-        "Zaghouan" => ["Zaghouan", "Zriba", "Bir Mcherga"],
-        "Siliana" => ["Siliana", "Gaâfour", "Bou Arada", "Makthar"],
-        "Le Kef" => ["Kef", "Tajerouine", "Nebeur", "Sakiet Sidi Youssef"],
-        "Sousse" => ["Sousse", "Msaken", "Akouda", "Hergla", "Enfidha"],
-        "Monastir" => ["Monastir", "Moknine", "Bembla", "Jemmal"],
-        "Mahdia" => ["Mahdia", "Ksour Essef", "Chebba", "Bou Merdes"],
-        "Kasserine" => ["Kasserine", "Sbeitla", "Fériana", "Thala"],
-        "Sidi Bouzid" => ["Sidi Bouzid", "Menzel Bouzaiane", "Regueb"],
-        "Kairouan" => ["Kairouan", "Haffouz", "Chebika", "Oueslatia"],
-        "Gafsa" => ["Gafsa", "El Ksar", "Métlaoui", "Redeyef"],
-        "Sfax" => ["Sfax", "Sakiet Eddaier", "Sakiet Ezzit", "El Hencha"],
-        "Gabès" => ["Gabès", "Matmata", "Mareth", "El Hamma"],
-        "Medenine" => ["Medenine", "Ben Gardane", "Zarzis", "Houmt Souk"],
-        "Tozeur" => ["Tozeur", "Nefta", "Degache"],
-        "Kébili" => ["Kébili", "Douz", "Souk Lahad"],
-        "Tataouine" => ["Tataouine", "Remada", "Ghomrassen", "Bir Lahmar"]
-    ],
-    "Libya" => [
-        "Tripoli" => ["Tripoli", "Jafara", "Zawiya", "Tajura", "Al Maya"],
-        "Benghazi" => ["Benghazi", "Butnan", "Derna", "Al Marj", "Tocra"],
-        "Misrata" => ["Misrata", "Marj", "Zlitan", "Bani Walid", "Tawergha"],
-        "Sirte" => ["Sirte", "Abu Hadi", "Harawa"],
-        "Sabha" => ["Sabha", "Murzuq", "Ubari", "Brak", "Ghat"],
-        "Al Jabal al Akhdar" => ["Al Bayda", "Shahhat", "Qubbah"],
-        "Al Jabal al Gharbi" => ["Gharyan", "Yafran", "Al Qalaa"],
-        "Al Kufra" => ["Kufra", "Tazirbu", "Al Jawf"],
-        "An Nuqat al Khams" => ["Zuwara", "Al Ajaylat", "Al Jumayl"],
-        "Al Wahat" => ["Ajdabiya", "Jalu", "Awjila"]
-    ],
-    "Mauritania" => [
-        "Adrar" => ["Atar", "Chinguetti", "Ouadane"],
-        "Assaba" => ["Kiffa", "Barkewol", "Guerou"],
-        "Brakna" => ["Aleg", "Boghé", "Bababé"],
-        "Dakhlet Nouadhibou" => ["Nouadhibou", "Chami", "Boulenoir"],
-        "Gorgol" => ["Kaédi", "Maghama", "M'Bout"],
-        "Guidimaka" => ["Sélibaby", "Ould Yengé", "Bouanze"],
-        "Hodh Ech Chargui" => ["Néma", "Oualata", "Timbedra"],
-        "Hodh El Gharbi" => ["Ayoun el Atrous", "Touil", "Koubenni"],
-        "Inchiri" => ["Akjoujt", "Aoujeft", "Benichab"],
-        "Nouakchott Nord" => ["Dar Naim", "Teyarett", "Toujounine"],
-        "Nouakchott Ouest" => ["Tevragh Zeina", "Ksar", "Sebkha"],
-        "Nouakchott Sud" => ["Arafat", "El Mina", "Riyad"],
-        "Tagant" => ["Tidjikja", "Moudjeria", "Tichitt"],
-        "Tiris Zemmour" => ["Zouérat", "Fderick", "Bir Moghrein"],
-        "Trarza" => ["Rosso", "Boutilimit", "Mederdra"]
-    ]
-];
-// Define challenges with progress
-$challenges = [
-    ["action" => "Recycle 100 Items", "reward" => "200 pts", "goal" => 100, "progress" => 65],
-    ["action" => "Go Plastic-Free Week", "reward" => "150 pts", "goal" => 7, "progress" => 4],
-    ["action" => "Recycle 50 Aluminum Cans", "reward" => "100 pts", "goal" => 50, "progress" => 30],
-    ["action" => "Reduce Waste by 5kg", "reward" => "250 pts", "goal" => 5, "progress" => 3],
-    ["action" => "Recycle 20 Glass Bottles", "reward" => "80 pts", "goal" => 20, "progress" => 12],
-    ["action" => "Complete Monthly Eco Goal", "reward" => "300 pts", "goal" => 1, "progress" => 0]
-];
-// Define recycling points (points per kg or unit)
-$recycling_rates = [
-    "Plastic" => 10,
-    "Paper" => 5,
-    "Glass" => 8,
-    "Aluminum" => 12,
-    "Cardboard" => 6,
-    "E-Waste" => 15,
-    "Textiles" => 4
-];
-// Placeholder leaderboard data
-$leaderboard = [
-    ["name" => "Sara Brown", "level" => "Eco Champion", "points" => 3200, "activities" => 85],
-    ["name" => "Mohammed Ali", "level" => "Green Warrior", "points" => 2450, "activities" => 65],
-    ["name" => "Fatima Zahra", "level" => "Recycling Hero", "points" => 1250, "activities" => 42],
-    ["name" => "John Doe", "level" => "Eco Starter", "points" => 950, "activities" => 30],
-    ["name" => "Amina Khalil", "level" => "Green Scout", "points" => 780, "activities" => 25]
-];
+require_once '../php_partie_user/connection.php';
+
+if (isLoggedIn()) {
+    $user_id = $_SESSION['user_id'];
+
+    // Récupérer les données de l'utilisateur y compris profile_image
+    $stmt = $pdo->prepare("SELECT username, email, points, level, profile_image FROM users WHERE user_id = :user_id");
+    $stmt->execute([':user_id' => $user_id]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $user_name = $user['username'] ?? 'Invité';
+    $user_email = $user['email'] ?? '';
+    $user_points = $user['points'] ?? 0;
+    // Déterminer le niveau en fonction des points
+    $user_level = $user['level'] ?? 'Débutant Éco';
+    if ($user_points >= 1000) {
+        $user_level = 'Champion Éco';
+    } elseif ($user_points >= 300) {
+        $user_level = 'Maître Éco';
+    } elseif ($user_points >= 100) {
+        $user_level = 'Guerrier Éco';
+    }
+    $user_profile_image = $user['profile_image'] ?? 'images/person.jpg'; // Image par défaut si null
+
+    // Récupérer les activités récentes
+    $stmt = $pdo->prepare("SELECT action, points, date FROM activity_log WHERE user_id = :user_id ORDER BY date DESC LIMIT 7");
+    $stmt->execute([':user_id' => $user_id]);
+    $recent_activity = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Calculer le total des objets recyclés par type
+    $items_recycled_by_type = [];
+    try {
+        $stmt = $pdo->prepare("SELECT action FROM activity_log WHERE user_id = :user_id");
+        $stmt->execute([':user_id' => $user_id]);
+        $activities = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($activities as $activity) {
+            if (preg_match('/Recyclé\s+(.+?)\s+\((\d+\.?\d*)\s*kg\)/', $activity['action'], $matches)) {
+                $recycle_type = $matches[1];
+                $quantity = floatval($matches[2]);
+                $items_recycled_by_type[$recycle_type] = ($items_recycled_by_type[$recycle_type] ?? 0) + $quantity;
+            }
+        }
+    } catch (PDOException $e) {
+        error_log("Erreur de base de données lors du calcul des objets recyclés : " . $e->getMessage());
+    }
+    $items_recycled = array_sum($items_recycled_by_type);
+
+    // Récupérer les lieux à proximité
+    $nearby_locations = $pdo->query("SELECT name, time, `location`, image, country, state, city, closing_time FROM recycling_locations ORDER BY RAND() LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
+
+    // Récupérer les défis depuis admin_challenges avec le progrès de l'utilisateur, en excluant les défis expirés
+    $challenges = [];
+    try {
+        $stmt = $pdo->prepare("
+            SELECT ac.challenge_id, ac.action, ac.reward, ac.goal, COALESCE(uc.progress, 0) AS progress, uc.completed_at, uc.badge_earned, ac.expiration_date
+            FROM admin_challenges ac
+            LEFT JOIN user_challenges uc ON ac.challenge_id = uc.challenge_id AND uc.user_id = :user_id
+            WHERE ac.expiration_date > NOW()
+            ORDER BY ac.goal ASC
+        ");
+        $stmt->execute([':user_id' => $user_id]);
+        $challenges = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (empty($challenges)) {
+            error_log("Aucun défi actif trouvé pour user_id : $user_id");
+        } else {
+            error_log("Défis récupérés : " . print_r($challenges, true));
+        }
+    } catch (PDOException $e) {
+        error_log("Erreur de base de données lors de la récupération des défis : " . $e->getMessage());
+    }
+
+    // Récupérer le classement avec profile_image
+    $leaderboard = $pdo->query("SELECT username, level, points, profile_image FROM users ORDER BY points DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+
+    // Définir les taux de recyclage
+    $recycling_rates = [
+        "Plastique" => 10,
+        "Papier" => 5,
+        "Verre" => 8,
+        "Aluminium" => 12,
+        "Carton" => 6,
+        "Déchets électroniques" => 15,
+        "Textiles" => 4
+    ];
+
+    // Définir les pays, états et villes
+    $countries_states_cities = [
+        "Maroc" => [
+            "Casablanca Settat" => ["Casablanca", "Mohammedia", "Settat", "Berrechid", "El Jadida"],
+            "Marrakech Safi" => ["Marrakech", "Safi", "Essaouira", "Youssoufia", "Kelaa des Sraghna"],
+            "Fès Meknès" => ["Fès", "Meknès", "Taza", "Sefrou", "Ifrane"],
+            "Tanger Tétouan Al Hoceima" => ["Tanger", "Tétouan", "Al Hoceima", "Larache", "Chefchaouen"],
+            "Rabat Salé Kénitra" => ["Rabat", "Salé", "Kénitra", "Skhirat-Témara", "Sidi Kacem"],
+            "Béni Mellal Khénifra" => ["Béni Mellal", "Khénifra", "Azilal"],
+            "Drâa Tafilalet" => ["Errachidia", "Ouarzazate", "Zagora"],
+            "Souss Massa" => ["Agadir", "Inezgane", "Tiznit"],
+            "Guelmim Oued Noun" => ["Guelmim", "Tan Tan", "Sidi Ifni"],
+            "Laâyoune Sakia El Hamra" => ["Laayoune", "Boujdour", "Tarfaya"],
+            "Dakhla Oued Ed Dahab" => ["Dakhla", "Oued Ed Dahab", "Bir Gandouin"]
+        ],
+        "Algérie" => [
+            "Alger" => ["Alger", "Birkhadem", "Bab El Oued", "Hussein Dey", "Kouba"],
+            "Oran" => ["Oran", "Arzew", "Bir El Djir", "Aïn El Turk", "Es Senia"],
+            "Constantine" => ["Constantine", "Hamma Bouziane", "El Khroub", "Zighoud Youcef", "Aïn Smara"],
+            "Annaba" => ["Annaba", "El Bouni", "Seraidi", "El Hadjar", "Berrahal"],
+            "Tizi Ouzou" => ["Tizi Ouzou", "Azazga", "Boghni", "Draâ Ben Khedda", "Mekla"],
+            "Batna" => ["Batna", "Merouana", "Timgad", "Aïn Touta"],
+            "Béjaïa" => ["Béjaïa", "Amizour", "Kherrata", "Sidi Aïch"],
+            "Biskra" => ["Biskra", "Sidi Okba", "El Kantara"],
+            "Blida" => ["Blida", "Boufarik", "Bouïnane", "Oued El Alleug"],
+            "Oran-étendu" => ["Saïda", "Mascara", "Tlemcen", "Sidi Bel Abbès", "Mostaganem"],
+            "Sétif" => ["Sétif", "El Eulma", "Aïn Oulmene"],
+            "Djelfa" => ["Djelfa", "Aïn Oussera", "Messâad"],
+            "Ghardaïa" => ["Ghardaïa", "Metlili", "El Menea"],
+            "Tamanrasset" => ["Tamanrasset", "In Salah", "In Guezzam"]
+        ],
+        "Tunisie" => [
+            "Tunis" => ["Tunis", "La Goulette", "Carthage", "Sidi Bou Said", "Le Bardo"],
+            "Ariana" => ["Ariana", "Raoued", "Mnihla", "Ettadhamen"],
+            "Ben Arous" => ["Ben Arous", "El Mourouj", "Rades", "Hammam Lif"],
+            "Manouba" => ["Manouba", "Douar Hicher", "Mornag", "Tebourba"],
+            "Bizerte" => ["Bizerte", "Menzel Bourguiba", "Mateur", "Sejnane"],
+            "Nabeul" => ["Nabeul", "Hammamet", "Kélibia", "Dar Chaabane", "Grombalia"],
+            "Béja" => ["Béja", "Testour", "Nefza", "Téboursouk"],
+            "Jendouba" => ["Jendouba", "Tabarka", "Ghardimaou", "Aïn Draham"],
+            "Zaghouan" => ["Zaghouan", "Zriba", "Bir Mcherga"],
+            "Siliana" => ["Siliana", "Gaâfour", "Bou Arada", "Makthar"],
+            "Le Kef" => ["Kef", "Tajerouine", "Nebeur", "Sakiet Sidi Youssef"],
+            "Sousse" => ["Sousse", "Msaken", "Akouda", "Hergla", "Enfidha"],
+            "Monastir" => ["Monastir", "Moknine", "Bembla", "Jemmal"],
+            "Mahdia" => ["Mahdia", "Ksour Essef", "Chebba", "Bou Merdes"],
+            "Kasserine" => ["Kasserine", "Sbeitla", "Fériana", "Thala"],
+            "Sidi Bouzid" => ["Sidi Bouzid", "Menzel Bouzaiane", "Regueb"],
+            "Kairouan" => ["Kairouan", "Haffouz", "Chebika", "Oueslatia"],
+            "Gafsa" => ["Gafsa", "El Ksar", "Métlaoui", "Redeyef"],
+            "Sfax" => ["Sfax", "Sakiet Eddaier", "Sakiet Ezzit", "El Hencha"],
+            "Gabès" => ["Gabès", "Matmata", "Mareth", "El Hamma"],
+            "Médenine" => ["Médenine", "Ben Gardane", "Zarzis", "Houmt Souk"],
+            "Tozeur" => ["Tozeur", "Nefta", "Degache"],
+            "Kébili" => ["Kébili", "Douz", "Souk Lahad"],
+            "Tataouine" => ["Tataouine", "Remada", "Ghomrassen", "Bir Lahmar"]
+        ],
+        "Libye" => [
+            "Tripoli" => ["Tripoli", "Jafara", "Zawiya", "Tajura", "Al Maya"],
+            "Benghazi" => ["Benghazi", "Butnan", "Derna", "Al Marj", "Tocra"],
+            "Misrata" => ["Misrata", "Marj", "Zlitan", "Bani Walid", "Tawergha"],
+            "Sirte" => ["Sirte", "Abu Hadi", "Harawa"],
+            "Sabha" => ["Sabha", "Murzuq", "Ubari", "Brak", "Ghat"],
+            "Al Jabal al Akhdar" => ["Al Bayda", "Shahhat", "Qubbah"],
+            "Al Jabal al Gharbi" => ["Gharyan", "Yafran", "Al Qalaa"],
+            "Al Kufra" => ["Kufra", "Tazirbu", "Al Jawf"],
+            "An Nuqat al Khams" => ["Zuwara", "Al Ajaylat", "Al Jumayl"],
+            "Al Wahat" => ["Ajdabiya", "Jalu", "Awjila"]
+        ],
+        "Mauritanie" => [
+            "Adrar" => ["Atar", "Chinguetti", "Ouadane"],
+            "Assaba" => ["Kiffa", "Barkewol", "Guerou"],
+            "Brakna" => ["Aleg", "Boghé", "Bababé"],
+            "Dakhlet Nouadhibou" => ["Nouadhibou", "Chami", "Boulenoir"],
+            "Gorgol" => ["Kaédi", "Maghama", "M'Bout"],
+            "Guidimaka" => ["Sélibaby", "Ould Yengé", "Bouanze"],
+            "Hodh Ech Chargui" => ["Néma", "Oualata", "Timbedra"],
+            "Hodh El Gharbi" => ["Ayoun el Atrous", "Touil", "Koubenni"],
+            "Inchiri" => ["Akjoujt", "Aoujeft", "Benichab"],
+            "Nouakchott Nord" => ["Dar Naim", "Teyarett", "Toujounine"],
+            "Nouakchott Ouest" => ["Tevragh Zeina", "Ksar", "Sebkha"],
+            "Nouakchott Sud" => ["Arafat", "El Mina", "Riyad"],
+            "Tagant" => ["Tidjikja", "Moudjeria", "Tichitt"],
+            "Tiris Zemmour" => ["Zouérat", "Fderick", "Bir Moghrein"],
+            "Trarza" => ["Rosso", "Boutilimit", "Mederdra"]
+        ]
+    ];
+
+    // Définir les seuils et noms des badges
+    $badges = [
+        ['name' => 'Débutant Vert', 'threshold' => 10, 'icon' => 'fas fa-seedling', 'earned' => false],
+        ['name' => 'Héros du Plastique', 'threshold' => 50, 'icon' => 'fas fa-medal', 'earned' => false],
+        ['name' => 'Champion Éco', 'threshold' => 1000, 'icon' => 'fas fa-award', 'earned' => false],
+        ['name' => 'Recycleur Mensuel', 'threshold' => 100, 'icon' => 'fas fa-star', 'earned' => false]
+    ];
+
+    // Vérifier les badges gagnés en fonction des points
+    foreach ($badges as &$badge) {
+        if ($user_points >= $badge['threshold']) {
+            $badge['earned'] = true;
+        }
+    }
+    unset($badge);
+
+    // Gérer la soumission de recyclage
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['recycle_submit'])) {
+        $location_name = $_POST['location_name'];
+        $recycle_type = $_POST['recycle_type'];
+        $quantity = floatval($_POST['quantity']);
+        $points = round($quantity * $recycling_rates[$recycle_type]);
+
+        $stmt = $pdo->prepare("INSERT INTO activity_log (user_id, action, points, date) VALUES (:user_id, :action, :points, NOW())");
+        $stmt->execute([
+            ':user_id' => $user_id,
+            ':action' => "Recyclé $recycle_type ($quantity kg) à $location_name",
+            ':points' => $points
+        ]);
+
+        $stmt = $pdo->prepare("UPDATE users SET points = points + :points WHERE user_id = :user_id");
+        $stmt->execute([':points' => $points, ':user_id' => $user_id]);
+
+        // Mettre à jour le progrès des défis en fonction des points gagnés
+        foreach ($challenges as $challenge) {
+            $current_progress = $challenge['progress'];
+            $new_progress = $current_progress + $points;
+
+            $stmt = $pdo->prepare("
+                INSERT INTO user_challenges (user_id, challenge_id, progress)
+                VALUES (:user_id, :challenge_id, :progress)
+                ON DUPLICATE KEY UPDATE progress = VALUES(progress)
+            ");
+            $success = $stmt->execute([
+                ':user_id' => $user_id,
+                ':challenge_id' => $challenge['challenge_id'],
+                ':progress' => $new_progress
+            ]);
+            if (!$success) {
+                error_log("Échec de la mise à jour du progrès pour challenge_id : " . $challenge['challenge_id'] . " - Erreur : " . print_r($stmt->errorInfo(), true));
+            }
+
+            if ($new_progress >= $challenge['goal'] && !$challenge['completed_at']) {
+                $badge = 'Champion Éco'; // Attribuer un badge en fonction de la complétion du défi (personnalisable selon besoin)
+                $stmt = $pdo->prepare("
+                    UPDATE user_challenges 
+                    SET progress = :progress, completed_at = NOW(), badge_earned = :badge
+                    WHERE user_id = :user_id AND challenge_id = :challenge_id
+                ");
+                $stmt->execute([
+                    ':progress' => $new_progress,
+                    ':badge' => $badge,
+                    ':user_id' => $user_id,
+                    ':challenge_id' => $challenge['challenge_id']
+                ]);
+
+                $stmt = $pdo->prepare("UPDATE users SET points = points + :reward WHERE user_id = :user_id");
+                $stmt->execute([':reward' => $challenge['reward'], ':user_id' => $user_id]);
+            }
+        }
+
+        header("Location: home.php");
+        exit();
+    }
+
+    // Gérer la soumission de demande de poubelle
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bin_request_submit'])) {
+        $country = $_POST['country'];
+        $state = $_POST['state'];
+        $city = $_POST['city'];
+        $location = $_POST['location'];
+        $notes = $_POST['notes'];
+
+        $stmt = $pdo->prepare("INSERT INTO bin_requests (user_id, country, state, city, location, notes, status, date_submitted) VALUES (:user_id, :country, :state, :city, :location, :notes, 'En attente', NOW())");
+        $stmt->execute([
+            ':user_id' => $user_id,
+            ':country' => $country,
+            ':state' => $state,
+            ':city' => $city,
+            ':location' => $location,
+            ':notes' => $notes
+        ]);
+
+        header("Location: home.php");
+        exit();
+    }
+
+    // Gérer la mise à jour du profil
+    if (isset($_POST['update_profile'])) {
+        $new_username = $_POST['username'] ?? $user_name;
+        $new_email = $_POST['email'] ?? $user_email;
+        $new_password = $_POST['password'] ?? '';
+        $new_image = $user_profile_image;
+
+        // Gérer le téléchargement d'image
+        if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
+            $upload_dir = 'uploads/';
+            $new_image = uniqid() . '_' . basename($_FILES['profile_image']['name']);
+            $target_file = $upload_dir . $new_image;
+            move_uploaded_file($_FILES['profile_image']['tmp_name'], $target_file);
+        }
+
+        // Mettre à jour le mot de passe s'il est fourni
+        $password_update = '';
+        if (!empty($new_password)) {
+            $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+            $password_update = ", password = :password";
+        }
+
+        $update_stmt = $pdo->prepare("UPDATE users SET username = :username, email = :email, profile_image = :profile_image, level = :level $password_update WHERE user_id = :user_id");
+        $params = [
+            ':username' => $new_username,
+            ':email' => $new_email,
+            ':profile_image' => basename($new_image),
+            ':level' => $user_level, // Mettre à jour le niveau dans la base de données
+            ':user_id' => $user_id
+        ];
+        if (!empty($new_password)) {
+            $params[':password'] = $hashed_password;
+        }
+        $success = $update_stmt->execute($params);
+
+        // Retourner une réponse JSON
+        header('Content-Type: application/json');
+        echo json_encode(['success' => $success]);
+        exit();
+    }
+} else {
+    header("Location: signin.php");
+    exit();
+}
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CycleBins Dashboard</title>
+    <title>Tableau de bord CycleBins</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -371,7 +542,6 @@ $leaderboard = [
             margin-left: 250px;
             overflow-x: hidden;
         }
-
         
         .welcome-banner {
             background: var(--gradient);
@@ -755,8 +925,20 @@ $leaderboard = [
             font-size: 0.85rem;
             color: #666;
         }
+
+        .challenge-card.completed {
+            background: var(--primary-light);
+            border: 2px solid var(--primary);
+        }
+
+        .challenge-completed {
+            font-size: 0.85rem;
+            color: var(--primary);
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
         
-        .bin-request-modal, .recycle-modal {
+        .bin-request-modal, .recycle-modal, .edit-profile-modal {
             display: none;
             position: fixed;
             top: 0;
@@ -769,11 +951,11 @@ $leaderboard = [
             align-items: center;
         }
         
-        .bin-request-modal.active, .recycle-modal.active {
+        .bin-request-modal.active, .recycle-modal.active, .edit-profile-modal.active {
             display: flex;
         }
         
-        .bin-request-form, .recycle-form {
+        .bin-request-form, .recycle-form, .edit-profile-form {
             background: white;
             padding: 2rem;
             border-radius: 15px;
@@ -786,7 +968,7 @@ $leaderboard = [
             border: 1px solid rgba(0, 200, 83, 0.2);
         }
 
-        .bin-request-form h3, .recycle-form h3 {
+        .bin-request-form h3, .recycle-form h3, .edit-profile-form h3 {
             color: var(--secondary);
             margin-bottom: 1.5rem;
             font-size: 1.8rem;
@@ -877,12 +1059,61 @@ $leaderboard = [
             display: none;
         }
         
-        /* Smooth scrolling behavior */
+        /* Style du bouton Ajouter un lieu (Correspondant à l'admin) */
+        .add-location {
+            padding: 1rem;
+            background: var(--gradient);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+        
+        .add-location:hover {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 200, 83, 0.2);
+        }
+        
+        /* Comportement de défilement fluide */
         html {
             scroll-behavior: smooth;
         }
+
+        .see-location-link {
+            display: inline-block;
+            margin-top: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--primary-light);
+            color: var(--primary);
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .see-location-link:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .place-card {
+            cursor: pointer;
+        }
+
+        .place-card:hover .see-location-link {
+            background: var(--primary-light);
+        }
         
-        /* Responsive adjustments */
+        /* Ajustements responsives */
         @media (max-width: 1200px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
@@ -992,8 +1223,8 @@ $leaderboard = [
         </div>
         <div class="user-menu" onclick="toggleDialog()">
             <div class="user-profile">
-                <div class="user-avatar"><img src="images/person.jpg" alt="Profile"></div>
-                <span class="user-name"><?php echo $user_name; ?></span>
+                <div class="user-avatar"><img src="uploads/<?php echo htmlspecialchars($user_profile_image); ?>" alt="Profil"></div>
+                <span class="user-name"><?php echo htmlspecialchars($user_name); ?></span>
             </div>
         </div>
     </nav>
@@ -1001,56 +1232,53 @@ $leaderboard = [
     <div class="dashboard-container">
         <aside class="sidebar">
             <ul class="sidebar-menu">
-                <li><a href="#dashboard" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
-                <li><a href="#map"><i class="fas fa-map-marker-alt"></i> Recycling Map</a></li>
-                <li><a href="#rewards"><i class="fas fa-trophy"></i> Rewards</a></li>
-                <li><a href="#statistics"><i class="fas fa-chart-line"></i> Statistics</a></li>
-                <li><a href="#recycling-log"><i class="fas fa-recycle"></i> Recycling Log</a></li>
-                <li><a href="#bin-request"><i class="fas fa-plus"></i> Bin Request</a></li>
-                <li><a href="#challenges"><i class="fas fa-trophy"></i> Challenges</a></li>
-                <li><a href="#leaderboard"><i class="fas fa-crown"></i> Leaderboard</a></li>
+                <li><a href="#dashboard" class="active"><i class="fas fa-home"></i> Tableau de bord</a></li>
+                <li><a href="#map"><i class="fas fa-map-marker-alt"></i> Carte de recyclage</a></li>
+                <li><a href="#rewards"><i class="fas fa-trophy"></i> Récompenses</a></li>
+                <li><a href="#bin-request"><i class="fas fa-plus"></i> Demande de poubelle</a></li>
+                <li><a href="#challenges"><i class="fas fa-trophy"></i> Défis</a></li>
+                <li><a href="#activity"><i class="fas fa-history"></i> Journal d'activité</a></li>
+                <li><a href="#leaderboard"><i class="fas fa-crown"></i> Classement</a></li>
             </ul>
         </aside>
 
         <main class="main-content">
-            <!-- Dashboard Section -->
             <section id="dashboard">
                 <div class="welcome-banner animate__animated animate__fadeIn">
-                    <h2>Welcome back, <?php echo $user_name; ?>!</h2>
-                    <p>You're making a difference! Track your recycling impact, find nearby bins, and earn rewards for your eco-friendly actions.</p>
+                    <h2>Bienvenue, <?php echo htmlspecialchars($user_name); ?> !</h2>
+                    <p>Vous faites une différence ! Suivez votre impact en matière de recyclage, trouvez des poubelles à proximité et gagnez des récompenses pour vos actions écoresponsables.</p>
                 </div>
                 <div class="stats-cards">
                     <div class="stat-card animate__animated animate__fadeInUp">
-                        <h3><i class="fas fa-coins"></i> Your Points</h3>
+                        <h3><i class="fas fa-coins"></i> Vos Points</h3>
                         <div class="value"><?php echo number_format($user_points); ?></div>
                     </div>
                     <div class="stat-card animate__animated animate__fadeInUp animate__delay-1s">
-                        <h3><i class="fas fa-leaf"></i> Level</h3>
-                        <div class="value"><?php echo $user_level; ?></div>
+                        <h3><i class="fas fa-leaf"></i> Niveau</h3>
+                        <div class="value"><?php echo htmlspecialchars($user_level); ?></div>
                     </div>
                     <div class="stat-card animate__animated animate__fadeInUp animate__delay-2s">
-                        <h3><i class="fas fa-recycle"></i> Items Recycled</h3>
-                        <div class="value">42</div>
+                        <h3><i class="fas fa-recycle"></i> Objets Recyclés</h3>
+                        <div class="value"><?php echo number_format($items_recycled, 1); ?> kg</div>
                     </div>
                     <div class="stat-card animate__animated animate__fadeInUp animate__delay-3s">
-                        <h3><i class="fas fa-weight"></i> Waste Diverted</h3>
-                        <div class="value">18.5 kg</div>
+                        <h3><i class="fas fa-weight"></i> Déchets Détournés</h3>
+                        <div class="value"><?php echo number_format($items_recycled, 1); ?> kg</div>
                     </div>
                 </div>
             </section>
 
-            <!-- Recycling Map Section (Now Places List) -->
             <section id="map">
                 <div class="dashboard-card animate__animated animate__fadeIn">
                     <div class="card-header">
-                        <h3>Nearby Recycling Locations</h3>
-                        <a href="#" class="see-all" onclick="toggleSection('map', 4)">View All <i class="fas fa-chevron-right"></i></a>
+                        <h3>Lieux de recyclage à proximité</h3>
+                        <a href="#" class="see-all" onclick="toggleSection('map', 4)">Voir tout <i class="fas fa-chevron-right"></i></a>
                     </div>
                     <form class="filter-form" id="locationFilter">
                         <div class="form-group">
-                            <label for="country">Country:</label>
+                            <label for="country">Pays :</label>
                             <select id="country" name="country" onchange="updateStatesAndCities()">
-                                <option value="">All</option>
+                                <option value="">Tous</option>
                                 <?php
                                 $countries = array_keys($countries_states_cities);
                                 foreach ($countries as $country) {
@@ -1060,167 +1288,130 @@ $leaderboard = [
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="state">State/Region:</label>
+                            <label for="state">Région/État :</label>
                             <select id="state" name="state" onchange="updateCities()">
-                                <option value="">All</option>
+                                <option value="">Tous</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="city">City:</label>
+                            <label for="city">Ville :</label>
                             <select id="city" name="city" onchange="filterLocations()">
-                                <option value="">All</option>
+                                <option value="">Tous</option>
                             </select>
                         </div>
                     </form>
                     <div class="places-grid" id="placesGrid">
                         <?php foreach ($nearby_locations as $index => $location): ?>
-                        <div class="place-card <?php echo $index >= 4 ? 'hidden' : ''; ?>" data-index="<?php echo $index; ?>" data-country="<?php echo $location['country']; ?>" data-state="<?php echo $location['state']; ?>" data-city="<?php echo $location['city']; ?>" onclick="showRecycleForm('<?php echo $location['name']; ?>')">
-                            <img src="images/<?php echo $location['image']; ?>" alt="<?php echo $location['name']; ?>" class="place-image">
-                            <div class="place-name"><?php echo $location['name']; ?></div>
-                            <div class="place-time">Open: <?php echo $location['time']; ?></div>
-                            <div class="place-location"><?php echo $location['location']; ?></div>
+                        <div class="place-card <?php echo $index >= 4 ? 'hidden' : ''; ?>" data-index="<?php echo $index; ?>" data-country="<?php echo htmlspecialchars($location['country']); ?>" data-state="<?php echo htmlspecialchars($location['state']); ?>" data-city="<?php echo htmlspecialchars($location['city']); ?>" onclick="showRecycleForm('<?php echo htmlspecialchars($location['name']); ?>')">
+                            <img src="uploads/<?php echo htmlspecialchars($location['image']); ?>" alt="<?php echo htmlspecialchars($location['name']); ?>" class="place-image">
+                            <div class="place-name"><?php echo htmlspecialchars($location['name']); ?></div>
+                            <div class="place-time">Ouvert : <?php echo htmlspecialchars($location['time']); ?> - Fermé : <?php echo isset($location['closing_time']) ? htmlspecialchars($location['closing_time']) : 'N/A'; ?></div>
+                            <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($location['location']); ?>" target="_blank" class="see-location-link">Voir l'emplacement</a>
                         </div>
                         <?php endforeach; ?>
                     </div>
                 </div>
             </section>
 
-            <!-- Rewards Section -->
             <section id="rewards">
                 <div class="dashboard-card animate__animated animate__fadeIn">
                     <div class="card-header">
-                        <h3>Your Badges</h3>
-                        <a href="#" class="see-all">View All <i class="fas fa-chevron-right"></i></a>
+                        <h3>Ganger des Badges</h3>
                     </div>
                     <div class="badges-container">
-                        <div class="badge earned">
-                            <i class="fas fa-seedling"></i>
-                            <span class="badge-tooltip">Green Starter - Recycled 10 items</span>
-                        </div>
-                        <div class="badge earned">
-                            <i class="fas fa-medal"></i>
-                            <span class="badge-tooltip">Plastic Hero - Recycled 50 plastic items</span>
-                        </div>
-                        <div class="badge">
-                            <i class="fas fa-award"></i>
-                            <span class="badge-tooltip">Eco Champion - Reach 1000 points</span>
-                        </div>
-                        <div class="badge">
-                            <i class="fas fa-star"></i>
-                            <span class="badge-tooltip">Monthly Recycler - Recycle 3 months in a row</span>
-                        </div>
+                        <?php foreach ($badges as $badge): ?>
+                            <div class="badge <?php echo $badge['earned'] ? 'earned' : ''; ?>">
+                                <i class="<?php echo $badge['icon']; ?>"></i>
+                                <span class="badge-tooltip"><?php echo htmlspecialchars($badge['name']) . ' - ' . ($badge['name'] === 'Recycleur Mensuel' ? 'Recyclez 3 mois d\'affilée' : ($badge['threshold'] . ' points')); ?></span>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
             </section>
 
-            <!-- Statistics Section -->
-            <section id="statistics">
+            <section id="bin-request">
                 <div class="dashboard-card animate__animated animate__fadeIn">
                     <div class="card-header">
-                        <h3>Quick Actions</h3>
+                        <h3>Demander une nouvelle poubelle de recyclage</h3>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
-                        <button style="padding: 1rem; background: var(--primary-light); border: none; border-radius: 8px; color: var(--primary); cursor: pointer; transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-                            <i class="fas fa-plus-circle" style="font-size: 1.5rem;"></i>
-                            <span>Log Recycling</span>
-                        </button>
-                        <button style="padding: 1rem; background: var(--primary-light); border: none; border-radius: 8px; color: var(--primary); cursor: pointer; transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-                            <i class="fas fa-gift" style="font-size: 1.5rem;"></i>
-                            <span>Redeem Rewards</span>
-                        </button>
-                        <button style="padding: 1rem; background: var(--primary-light); border: none; border-radius: 8px; color: var(--primary); cursor: pointer; transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-                            <i class="fas fa-map-marked-alt" style="font-size: 1.5rem;"></i>
-                            <span>Find Bins</span>
-                        </button>
-                        <button style="padding: 1rem; background: var(--primary-light); border: none; border-radius: 8px; color: var(--primary); cursor: pointer; transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-                            <i class="fas fa-chart-pie" style="font-size: 1.5rem;"></i>
-                            <span>View Stats</span>
-                        </button>
-                    </div>
+                    <p>Améliorez l'accessibilité au recyclage dans votre région en demandant un nouveau point de collecte.</n> </p>
+                    <button class="add-location" onclick="showBinRequestForm()"><i class="fas fa-plus"></i> Demander une nouvelle poubelle</button>
                 </div>
             </section>
 
-            <!-- Recycling Log Section -->
-            <section id="recycling-log">
+            <section id="challenges">
                 <div class="dashboard-card animate__animated animate__fadeIn">
                     <div class="card-header">
-                        <h3>Recent Activity</h3>
-                        <a href="activity_log.php" class="see-all">See All <i class="fas fa-chevron-right"></i></a>
+                        <h3>Défis</h3>
+                    </div>
+                    <p>Relevez des défis excitants pour gagner des récompenses supplémentaires !</p>
+                    <div class="challenges-grid">
+                        <?php foreach ($challenges as $challenge): 
+                            $percentage = $challenge['goal'] > 0 ? min(100, ($challenge['progress'] / $challenge['goal']) * 100) : 0;
+                            $completed = $challenge['completed_at'] ? true : false;
+                        ?>
+                        <div class="challenge-card <?php echo $completed ? 'completed' : ''; ?>">
+                            <div class="challenge-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="challenge-details">
+                                <div class="challenge-action"><?php echo htmlspecialchars($challenge['action']); ?></div>
+                                <div class="challenge-progress"><?php echo htmlspecialchars(number_format($challenge['progress'])) . ' / ' . htmlspecialchars(number_format($challenge['goal'])); ?> pts</div>
+                                <div class="challenge-progress-bar">
+                                    <div class="challenge-progress-fill" style="width: <?php echo $percentage; ?>%;"></div>
+                                </div>
+                                <div class="challenge-reward">Récompense : <?php echo htmlspecialchars($challenge['reward']); ?> pts</div>
+                                <?php if ($completed): ?>
+                                    
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                        <?php if (empty($challenges)): ?>
+                            <p>Aucun défi actif disponible pour le moment.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </section>
+            <section id="activity">
+                <div class="dashboard-card animate__animated animate__fadeIn">
+                    <div class="card-header">
+                        <h3>Activité récente</h3>
+                        <a href="activity_log.php" class="see-all">Voir tout <i class="fas fa-chevron-right"></i></a>
                     </div>
                     <ul class="activity-list">
-                        <?php for ($i = 0; $i < min(4, count($recent_activity)); $i++): ?>
+                        <?php foreach ($recent_activity as $activity): ?>
                         <li class="activity-item">
                             <div class="activity-icon">
                                 <i class="fas fa-recycle"></i>
                             </div>
                             <div class="activity-details">
-                                <div class="activity-action"><?php echo $recent_activity[$i]['action']; ?></div>
-                                <div class="activity-date"><?php echo $recent_activity[$i]['date']; ?></div>
+                                <div class="activity-action"><?php echo htmlspecialchars($activity['action']); ?></div>
+                                <div class="activity-date"><?php echo htmlspecialchars($activity['date']); ?></div>
                             </div>
-                            <div class="activity-points">+<?php echo $recent_activity[$i]['points']; ?> pts</div>
+                            <div class="activity-points">+<?php echo number_format($activity['points']); ?> pts</div>
                         </li>
-                        <?php endfor; ?>
+                        <?php endforeach; ?>
+                        <?php if (empty($recent_activity)): ?>
+                            <p>Aucune activité récente trouvée.</p>
+                        <?php endif; ?>
                     </ul>
                 </div>
             </section>
 
-            <!-- Bin Request Section -->
-            <section id="bin-request">
-                <div class="dashboard-card animate__animated animate__fadeIn">
-                    <div class="card-header">
-                        <h3>Request a New Recycling Bin</h3>
-                    </div>
-                    <p>Enhance recycling accessibility in your area by requesting a new bin location. Please fill out the form below with the proposed location details, and our team will review your submission and contact you shortly to discuss further steps.</p>
-                    <button class="side-request-btn" onclick="showBinRequestForm()">Request</button>
-                </div>
-            </section>
-
-            <!-- Challenges Section -->
-            <section id="challenges">
-                <div class="dashboard-card animate__animated animate__fadeIn">
-                    <div class="card-header">
-                        <h3>Challenges</h3>
-                    </div>
-                    <p>Take on exciting challenges to earn extra rewards!</p>
-                    <div class="challenges-grid">
-                        <?php foreach ($challenges as $challenge): 
-                            $percentage = min(100, ($challenge['progress'] / $challenge['goal']) * 100);
-                        ?>
-                        <div class="challenge-card">
-                            <div class="challenge-icon">
-                                <i class="fas fa-trophy"></i>
-                            </div>
-                            <div class="challenge-details">
-                                <div class="challenge-action"><?php echo $challenge['action']; ?></div>
-                                <div class="challenge-progress"><?php echo $challenge['progress'] . '/' . $challenge['goal']; ?></div>
-                                <div class="challenge-progress-bar">
-                                    <div class="challenge-progress-fill" style="width: <?php echo $percentage; ?>%;"></div>
-                                </div>
-                                <div class="challenge-reward">Reward: <?php echo $challenge['reward']; ?></div>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Leaderboard Section -->
             <section id="leaderboard">
                 <div class="dashboard-card animate__animated animate__fadeIn">
                     <div class="card-header">
-                        <h3>Leaderboard</h3>
-                        <a href="#" class="see-all">View All <i class="fas fa-chevron-right"></i></a>
+                        <h3>Classement</h3>
                     </div>
                     <ul class="activity-list">
                         <?php
-                        // Sort leaderboard by activities count in descending order
-                        usort($leaderboard, function($a, $b) {
-                            return $b['activities'] - $a['activities'];
-                        });
-                        for ($i = 0; $i < min(5, count($leaderboard)); $i++): ?>
+                        for ($i = 0; $i < min(5, count($leaderboard)); $i++): 
+                            $leader_profile_image = $leaderboard[$i]['profile_image'] ?? 'images/person.jpg'; // Image par défaut si null
+                        ?>
                         <li class="activity-item">
                             <div class="activity-icon">
-                                <i class="fas fa-user"></i>
+                                <img src="uploads/<?php echo htmlspecialchars($leader_profile_image); ?>" alt="Profil" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
                             </div>
                             <div class="activity-details">
                                 <div class="activity-action">
@@ -1231,9 +1422,8 @@ $leaderboard = [
                                     <?php elseif ($i === 2): ?>
                                         <i class="fas fa-crown bronze-crown crown"></i>
                                     <?php endif; ?>
-                                    <?php echo $leaderboard[$i]['name']; ?> (Level: <?php echo $leaderboard[$i]['level']; ?>)
+                                    <?php echo htmlspecialchars($leaderboard[$i]['username']); ?> 
                                 </div>
-                                <div class="activity-date">Activities: <?php echo $leaderboard[$i]['activities']; ?></div>
                             </div>
                             <div class="activity-points"><?php echo number_format($leaderboard[$i]['points']); ?> pts</div>
                         </li>
@@ -1245,27 +1435,29 @@ $leaderboard = [
     </div>
 
     <div class="user-dialog" id="userDialog">
-        <div class="profile-image"><img src="images/person.jpg" alt="Profile"></div>
+        <div class="profile-image"><img src="uploads/<?php echo htmlspecialchars($user_profile_image); ?>" alt="Profil"></div>
         <div class="user-info">
-            <h3><?php echo $user_name; ?></h3>
-            <p><?php echo $user_email; ?></p>
+            <h3><?php echo htmlspecialchars($user_name); ?></h3>
+            <p><?php echo htmlspecialchars($user_email); ?></p>
         </div>
         <div class="dialog-buttons">
-            <button onclick="alert('Switch Account clicked')">Switch Account</button>
-            <button onclick="alert('Delete Account clicked')" style="color: #f44336;">Delete Account</button>
-            <button onclick="window.location.href='index.php'">Logout</button>
+            <button onclick="alert('Changer de compte cliqué')">Changer de compte</button>
+            <button onclick="alert('Supprimer le compte cliqué')" style="color: #f44336;">Supprimer le compte</button>
+            <button onclick="window.location.href='index.php'">Déconnexion</button>
+            <button onclick="showEditProfileForm()">Modifier le profil</button>
         </div>
     </div>
 
     <div class="bin-request-modal" id="binRequestModal">
         <div class="bin-request-form">
             <button class="close-btn" onclick="hideBinRequestForm()">×</button>
-            <h3>Submit a Bin Request</h3>
-            <form id="binRequestForm" onsubmit="submitBinRequest(event)">
+            <h3>Soumettre une demande de poubelle</h3>
+            <form id="binRequestForm" method="post" action="">
+                <input type="hidden" name="bin_request_submit" value="1">
                 <div class="form-group">
-                    <label for="requestCountry">Country:</label>
-                    <select id="requestCountry" name="requestCountry" required>
-                        <option value="">Select Country</option>
+                    <label for="requestCountry">Pays :</label>
+                    <select id="requestCountry" name="country" required onchange="updateBinRequestStates()">
+                        <option value="">Sélectionner un pays</option>
                         <?php
                         $countries = array_keys($countries_states_cities);
                         foreach ($countries as $country) {
@@ -1275,26 +1467,26 @@ $leaderboard = [
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="requestState">State/Region:</label>
-                    <select id="requestState" name="requestState" required>
-                        <option value="">Select State/Region</option>
+                    <label for="requestState">Région/État :</label>
+                    <select id="requestState" name="state" required onchange="updateBinRequestCities()">
+                        <option value="">Sélectionner une région/état</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="requestCity">City:</label>
-                    <select id="requestCity" name="requestCity" required>
-                        <option value="">Select City</option>
+                    <label for="requestCity">Ville :</label>
+                    <select id="requestCity" name="city" required>
+                        <option value="">Sélectionner une ville</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="requestLocation">Specific Location:</label>
-                    <input type="text" id="requestLocation" name="requestLocation" placeholder="e.g., 123 Main Street" required>
+                    <label for="requestLocation">Emplacement spécifique :</label>
+                    <input type="text" id="requestLocation" name="location" placeholder="ex. : 123 Rue Principale" required>
                 </div>
                 <div class="form-group">
-                    <label for="requestNotes">Additional Notes:</label>
-                    <textarea id="requestNotes" name="requestNotes" placeholder="Any additional details (e.g., urgency, bin type)"></textarea>
+                    <label for="requestNotes">Notes supplémentaires :</label>
+                    <textarea id="requestNotes" name="notes" placeholder="Détails supplémentaires (ex. : urgence, type de poubelle)"></textarea>
                 </div>
-                <button type="submit" class="submit-btn">Submit Request</button>
+                <button type="submit" class="submit-btn">Soumettre la demande</button>
             </form>
         </div>
     </div>
@@ -1302,38 +1494,65 @@ $leaderboard = [
     <div class="recycle-modal" id="recycleModal">
         <div class="recycle-form">
             <button class="close-btn" onclick="hideRecycleForm()">×</button>
-            <h3 id="modalLocation">Recycling at [Location]</h3>
-            <form id="recycleForm" onsubmit="submitRecycleForm(event)">
+            <h3 id="modalLocation">Recyclage à [Emplacement]</h3>
+            <form id="recycleForm" method="post" action="">
+                <input type="hidden" name="recycle_submit" value="1">
+                <input type="hidden" name="location_name" id="locationName">
                 <div class="form-group">
-                    <label for="recycleType">Recycle Type:</label>
-                    <select id="recycleType" name="recycleType" required>
-                        <option value="Plastic">Plastic</option>
-                        <option value="Paper">Paper</option>
-                        <option value="Glass">Glass</option>
-                        <option value="Aluminum">Aluminum</option>
-                        <option value="Cardboard">Cardboard</option>
-                        <option value="E-Waste">E-Waste</option>
+                    <label for="recycleType">Type de recyclage :</label>
+                    <select id="recycleType" name="recycle_type" required onchange="updatePoints()">
+                        <option value="Plastique">Plastique</option>
+                        <option value="Papier">Papier</option>
+                        <option value="Verre">Verre</option>
+                        <option value="Aluminium">Aluminium</option>
+                        <option value="Carton">Carton</option>
+                        <option value="Déchets électroniques">Déchets électroniques</option>
                         <option value="Textiles">Textiles</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="quantity">Quantity (kg):</label>
-                    <input type="number" id="quantity" name="quantity" min="0.1" step="0.1" value="1" required>
+                    <label for="quantity">Quantité (kg) :</label>
+                    <input type="number" id="quantity" name="quantity" min="0.1" step="0.1" value="1" required oninput="updatePoints()">
                 </div>
-                <div class="points-display" id="pointsDisplay">Points: 0</div>
-                <button type="submit" class="submit-btn">Submit Recycling</button>
+                <div class="points-display" id="pointsDisplay">Points : 0</div>
+                <button type="submit" class="submit-btn">Soumettre le recyclage</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="edit-profile-modal" id="editProfileModal">
+        <div class="edit-profile-form">
+            <button class="close-btn" onclick="hideEditProfileForm()">×</button>
+            <h3>Modifier les détails du profil</h3>
+            <form method="post" enctype="multipart/form-data" onsubmit="submitEditProfileForm(event)">
+                <input type="hidden" name="update_profile" value="1">
+                <div class="form-group">
+                    <label for="edit_username">Nom d'utilisateur :</label>
+                    <input type="text" id="edit_username" name="username" value="<?php echo htmlspecialchars($user_name); ?>" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_email">Email :</label>
+                    <input type="email" id="edit_email" name="email" value="<?php echo htmlspecialchars($user_email); ?>" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_password">Nouveau mot de passe (laisser vide pour conserver l'actuel) :</label>
+                    <input type="password" id="edit_password" name="password">
+                </div>
+                <div class="form-group">
+                    <label for="edit_profile_image">Image de profil :</label>
+                    <input type="file" id="edit_profile_image" name="profile_image" accept="image/*">
+                </div>
+                <button type="submit" class="submit-btn">Mettre à jour le profil</button>
             </form>
         </div>
     </div>
 
     <script>
-        // Toggle user dialog
         function toggleDialog() {
             const dialog = document.getElementById('userDialog');
             dialog.classList.toggle('active');
         }
 
-        // Close dialog when clicking outside
         document.addEventListener('click', function(event) {
             const dialog = document.getElementById('userDialog');
             const userMenu = document.querySelector('.user-menu');
@@ -1342,7 +1561,6 @@ $leaderboard = [
             }
         });
 
-        // Sidebar active state on click
         document.querySelectorAll('.sidebar-menu a').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -1353,7 +1571,6 @@ $leaderboard = [
             });
         });
 
-        // Update active state based on scroll position
         window.addEventListener('scroll', function() {
             const sections = document.querySelectorAll('section');
             const sidebarLinks = document.querySelectorAll('.sidebar-menu a');
@@ -1372,24 +1589,19 @@ $leaderboard = [
             });
         });
 
-        // Initial animation trigger
         const animateOnScroll = function() {
             const elements = document.querySelectorAll('.stat-card, .dashboard-card');
-            
             elements.forEach(element => {
                 const elementPosition = element.getBoundingClientRect().top;
                 const screenPosition = window.innerHeight / 1.3;
-                
                 if (elementPosition < screenPosition) {
                     element.classList.add('animate__fadeInUp');
                 }
             });
         };
-        
         window.addEventListener('scroll', animateOnScroll);
         window.addEventListener('load', animateOnScroll);
 
-        // Function to toggle section visibility
         function toggleSection(sectionId, initialCount) {
             const section = document.getElementById(sectionId);
             const items = section.querySelectorAll('.place-card');
@@ -1401,74 +1613,43 @@ $leaderboard = [
                 }
             });
 
-            // Update button text based on visibility
             if (items[initialCount] && items[initialCount].classList.contains('hidden')) {
-                seeAllBtn.textContent = 'View All ';
+                seeAllBtn.textContent = 'Voir tout ';
                 seeAllBtn.appendChild(document.createElement('i')).className = 'fas fa-chevron-right';
             } else {
-                seeAllBtn.textContent = 'Hide ';
+                seeAllBtn.textContent = 'Masquer ';
                 seeAllBtn.appendChild(document.createElement('i')).className = 'fas fa-chevron-up';
             }
         }
 
-        // Show recycle form
         function showRecycleForm(locationName) {
             const modal = document.getElementById('recycleModal');
             const modalLocation = document.getElementById('modalLocation');
-            modalLocation.textContent = `Recycling at ${locationName}`;
+            const locationInput = document.getElementById('locationName');
+            modalLocation.textContent = `Recyclage à ${locationName}`;
+            locationInput.value = locationName;
             modal.classList.add('active');
             updatePoints();
         }
 
-        // Hide recycle form
         function hideRecycleForm() {
             const modal = document.getElementById('recycleModal');
             modal.classList.remove('active');
             document.getElementById('recycleForm').reset();
-            document.getElementById('pointsDisplay').textContent = 'Points: 0';
+            document.getElementById('pointsDisplay').textContent = 'Points : 0';
         }
 
-        // Update points display
         function updatePoints() {
             const recycleType = document.getElementById('recycleType').value;
             const quantity = parseFloat(document.getElementById('quantity').value) || 0;
             const rate = <?php echo json_encode($recycling_rates); ?>[recycleType] || 0;
             const points = Math.round(quantity * rate);
-            document.getElementById('pointsDisplay').textContent = `Points: ${points}`;
+            document.getElementById('pointsDisplay').textContent = `Points : ${points}`;
         }
 
-        // Submit recycle form
-        function submitRecycleForm(event) {
-            event.preventDefault();
-            const recycleType = document.getElementById('recycleType').value;
-            const quantity = parseFloat(document.getElementById('quantity').value);
-            const points = Math.round(quantity * <?php echo json_encode($recycling_rates); ?>[recycleType]);
-            const locationName = document.getElementById('modalLocation').textContent.replace('Recycling at ', '');
-            const date = new Date().toISOString().split('T')[0];
-
-            // Simulate adding to recent activity (for demo purposes)
-            const activity = {
-                action: `Recycled ${recycleType} (${quantity} kg) at ${locationName}`,
-                points: points,
-                date: date
-            };
-            console.log('Recycled:', activity);
-
-            // Update user points (simulated)
-            let currentPoints = parseInt('<?php echo $user_points; ?>') || 0;
-            currentPoints += points;
-            document.querySelector('.value').textContent = currentPoints.toLocaleString();
-
-            // Hide modal and reset
-            hideRecycleForm();
-            alert(`Successfully recycled ${quantity} kg of ${recycleType}! You earned ${points} points.`);
-        }
-
-        // Update points on input change
         document.getElementById('recycleType').addEventListener('change', updatePoints);
         document.getElementById('quantity').addEventListener('input', updatePoints);
 
-        // Filter locations
         function filterLocations() {
             const country = document.getElementById('country').value.toLowerCase();
             const state = document.getElementById('state').value.toLowerCase();
@@ -1490,12 +1671,11 @@ $leaderboard = [
                 }
             });
 
-            // Reset view all toggle if filtered
             const seeAllBtn = document.querySelector('#map .see-all');
             if (seeAllBtn) {
                 const hiddenCards = document.querySelectorAll('#placesGrid .place-card[style="display: none;"]');
                 if (hiddenCards.length === placeCards.length) {
-                    seeAllBtn.textContent = 'View All ';
+                    seeAllBtn.textContent = 'Voir tout ';
                     seeAllBtn.appendChild(document.createElement('i')).className = 'fas fa-chevron-right';
                 }
                 placeCards.forEach((card, index) => {
@@ -1504,16 +1684,14 @@ $leaderboard = [
             }
         }
 
-        // Update states based on country selection
         function updateStatesAndCities() {
             const country = document.getElementById('country').value;
             const stateSelect = document.getElementById('state');
             const citySelect = document.getElementById('city');
             const statesCities = <?php echo json_encode($countries_states_cities); ?>;
 
-            // Clear current options
-            stateSelect.innerHTML = '<option value="">All</option>';
-            citySelect.innerHTML = '<option value="">All</option>';
+            stateSelect.innerHTML = '<option value="">Tous</option>';
+            citySelect.innerHTML = '<option value="">Tous</option>';
 
             if (country && statesCities[country]) {
                 Object.keys(statesCities[country]).forEach(state => {
@@ -1524,20 +1702,17 @@ $leaderboard = [
                 });
             }
 
-            // Trigger city update if state is selected
             updateCities();
             filterLocations();
         }
 
-        // Update cities based on state selection
         function updateCities() {
             const country = document.getElementById('country').value;
             const state = document.getElementById('state').value;
             const citySelect = document.getElementById('city');
             const statesCities = <?php echo json_encode($countries_states_cities); ?>;
 
-            // Clear current options
-            citySelect.innerHTML = '<option value="">All</option>';
+            citySelect.innerHTML = '<option value="">Tous</option>';
 
             if (country && state && statesCities[country] && statesCities[country][state]) {
                 statesCities[country][state].forEach(city => {
@@ -1551,33 +1726,28 @@ $leaderboard = [
             filterLocations();
         }
 
-        // Initial load
         window.addEventListener('load', updateStatesAndCities);
 
-        // Show bin request form
         function showBinRequestForm() {
             const modal = document.getElementById('binRequestModal');
             modal.classList.add('active');
             updateBinRequestStates();
         }
 
-        // Hide bin request form
         function hideBinRequestForm() {
             const modal = document.getElementById('binRequestModal');
             modal.classList.remove('active');
             document.getElementById('binRequestForm').reset();
         }
 
-        // Update states for bin request form
         function updateBinRequestStates() {
             const country = document.getElementById('requestCountry').value;
             const stateSelect = document.getElementById('requestState');
             const citySelect = document.getElementById('requestCity');
             const statesCities = <?php echo json_encode($countries_states_cities); ?>;
 
-            // Clear current options
-            stateSelect.innerHTML = '<option value="">Select State/Region</option>';
-            citySelect.innerHTML = '<option value="">Select City</option>';
+            stateSelect.innerHTML = '<option value="">Sélectionner une région/état</option>';
+            citySelect.innerHTML = '<option value="">Sélectionner une ville</option>';
 
             if (country && statesCities[country]) {
                 Object.keys(statesCities[country]).forEach(state => {
@@ -1589,15 +1759,13 @@ $leaderboard = [
             }
         }
 
-        // Update cities for bin request form
         function updateBinRequestCities() {
             const country = document.getElementById('requestCountry').value;
             const state = document.getElementById('requestState').value;
             const citySelect = document.getElementById('requestCity');
             const statesCities = <?php echo json_encode($countries_states_cities); ?>;
 
-            // Clear current options
-            citySelect.innerHTML = '<option value="">Select City</option>';
+            citySelect.innerHTML = '<option value="">Sélectionner une ville</option>';
 
             if (country && state && statesCities[country] && statesCities[country][state]) {
                 statesCities[country][state].forEach(city => {
@@ -1609,57 +1777,42 @@ $leaderboard = [
             }
         }
 
-        // Submit bin request form
-        function submitBinRequest(event) {
-            event.preventDefault();
-            const country = document.getElementById('requestCountry').value;
-            const state = document.getElementById('requestState').value;
-            const city = document.getElementById('requestCity').value;
-            const location = document.getElementById('requestLocation').value;
-            const notes = document.getElementById('requestNotes').value;
-
-            // Simulate submission (for demo purposes)
-            const request = {
-                country: country,
-                state: state,
-                city: city,
-                location: location,
-                notes: notes
-            };
-            console.log('Bin Request:', request);
-
-            // Hide modal and reset
-            hideBinRequestForm();
-            alert('Thank you for your request! Our team will review it and contact you soon.');
-        }
-
-        // Event listeners for bin request form
         document.getElementById('requestCountry').addEventListener('change', function() {
             updateBinRequestStates();
             updateBinRequestCities();
         });
         document.getElementById('requestState').addEventListener('change', updateBinRequestCities);
-    </script>
+
+        function showEditProfileForm() {
+            const modal = document.getElementById('editProfileModal');
+            modal.classList.add('active');
+        }
+
+        function hideEditProfileForm() {
+            const modal = document.getElementById('editProfileModal');
+            modal.classList.remove('active');
+            document.querySelector('#editProfileModal form').reset();
+        }
+
+    function submitEditProfileForm(event) {
+        event.preventDefault();
+        const form = document.querySelector('#editProfileModal form');
+        const formData = new FormData(form);
+        fetch('home.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                hideEditProfileForm(); // Hide the modal
+                location.reload();    // Reload the page
+            } else {
+                alert('Failed to update profile.');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+</script>
 </body>
 </html>
-<style>
-    .side-request-btn {
-        position: absolute;
-        top: 1rem;
-        right: 2rem;
-        background: var(--primary);
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-size: 0.9rem;
-        width: auto;
-    }
-
-    .side-request-btn:hover {
-        background: var(--secondary);
-        transform: translateY(-2px);
-    }
-</style>

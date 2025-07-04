@@ -1,21 +1,44 @@
 <?php
 session_start();
-$welcome_message = "Welcome to CycleBins!";
+$welcome_message = "Bienvenue sur CycleBins !";
+
+// Connexion à la base de données
+try {
+    $pdo = new PDO("mysql:host=localhost;dbname=cyclebins_db", "root", "");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Échec de la connexion : " . $e->getMessage());
+}
+
+// Récupérer le nombre d'utilisateurs
+$total_users_stmt = $pdo->prepare("SELECT COUNT(*) as total FROM users");
+$total_users_stmt->execute();
+$total_users = $total_users_stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+// Récupérer le nombre d'emplacements de recyclage
+$locations_stmt = $pdo->prepare("SELECT COUNT(*) as total FROM recycling_locations");
+$locations_stmt->execute();
+$total_locations = $locations_stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+// Récupérer le total des points au lieu des kg
+$total_points_stmt = $pdo->prepare("SELECT SUM(points) as total_points FROM users");
+$total_points_stmt->execute();
+$total_points = $total_points_stmt->fetch(PDO::FETCH_ASSOC)['total_points'] ?? 0;
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CycleBins - Revolutionizing Recycling</title>
+    <title>CycleBins - Révolutionner le recyclage</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #00c853; /* Vibrant green */
-            --secondary: #00796b; /* Teal */
-            --accent: #ffab00; /* Amber */
-            --dark: #263238; /* Dark blue-gray */
+            --primary: #00c853; /* Vert vibrant */
+            --secondary: #00796b; /* Sable */
+            --accent: #ffab00; /* Ambre */
+            --dark: #263238; /* Bleu-gris foncé */
             --light: #f5f5f5;
             --gradient: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
         }
@@ -377,13 +400,11 @@ $welcome_message = "Welcome to CycleBins!";
             <span>CycleBins</span>
         </div>
         <div class="nav-buttons">
-            <button class="nav-btn animate__animated animate__fadeIn" onclick="window.location.href='php_partie_user/signup.php'">
-                <i class="fas fa-user-plus"></i>
-                Sign Up
+            <button class="nav-btn" onclick="window.location.href='signin.php'">
+                <i class="fas fa-sign-in-alt"></i> Connexion
             </button>
-            <button class="nav-btn animate__animated animate__fadeIn animate__delay-1s" onclick="window.location.href='php_partie_user/signin.php'">
-                <i class="fas fa-sign-in-alt"></i>
-                Sign In
+            <button class="nav-btn" onclick="checkAdminPassword()">
+                <i class="fas fa-user-shield"></i> Administrateurs
             </button>
         </div>
     </div>
@@ -391,59 +412,55 @@ $welcome_message = "Welcome to CycleBins!";
     <section class="hero">
         <div class="hero-content animate__animated animate__fadeInUp">
             <h1><?php echo $welcome_message; ?></h1>
-            <p>Join CycleBins to revolutionize recycling! Our innovative platform helps you manage waste efficiently, find collection points easily, and earn exciting rewards for contributing to a greener planet.</p>
-            <button class="cta-button animate__animated animate__pulse animate__infinite" onclick="window.location.href='home.php'">
-                Get Started
+            <p>Rejoignez CycleBins pour révolutionner le recyclage ! Notre plateforme innovante vous aide à gérer vos déchets efficacement, à trouver facilement des points de collecte et à gagner des récompenses excitantes pour contribuer à une planète plus verte.</p>
+            <button class="cta-button animate__animated animate__pulse animate__infinite" onclick="window.location.href='signin.php'">
+                Commencer
                 <i class="fas fa-arrow-right"></i>
             </button>
         </div>
     </section>
 
     <section class="features">
-        <h2 class="section-title animate__animated animate__fadeIn">Why Choose CycleBins?</h2>
+        <h2 class="section-title animate__animated animate__fadeIn">Pourquoi choisir CycleBins ?</h2>
         <div class="features-grid">
             <div class="feature-card floating">
                 <div class="feature-icon">
                     <i class="fas fa-map-marked-alt"></i>
                 </div>
-                <h3>Smart Locator</h3>
-                <p>Find recycling bins and centers near you with our intelligent mapping system that updates in real-time.</p>
+                <h3>Localisateur intelligent</h3>
+                <p>Trouvez des poubelles et centres de recyclage près de chez vous avec notre système de cartographie intelligent qui se met à jour en temps réel.</p>
             </div>
             <div class="feature-card floating delay-1">
                 <div class="feature-icon">
                     <i class="fas fa-coins"></i>
                 </div>
-                <h3>Rewards Program</h3>
-                <p>Earn points for every recycling action and redeem them for discounts, products, or donations to eco-causes.</p>
+                <h3>Programme de récompenses</h3>
+                <p>Gagnez des points pour chaque action de recyclage et échangez-les contre des réductions, des produits ou des dons à des causes écologiques.</p>
             </div>
             <div class="feature-card floating delay-2">
                 <div class="feature-icon">
                     <i class="fas fa-chart-line"></i>
                 </div>
-                <h3>Track Impact</h3>
-                <p>Monitor your environmental contribution with detailed analytics and personalized reports.</p>
+                <h3>Suivi de l'impact</h3>
+                <p>Surveillez votre contribution environnementale avec des analyses détaillées et des rapports personnalisés.</p>
             </div>
         </div>
     </section>
 
     <section class="stats">
-        <h2 class="section-title animate__animated animate__fadeIn">Our Impact</h2>
+        <h2 class="section-title animate__animated animate__fadeIn">Notre impact</h2>
         <div class="stats-grid">
             <div class="stat-item animate__animated animate__fadeInUp">
-                <div class="stat-number">10K+</div>
-                <div class="stat-label">Active Users</div>
+                <div class="stat-number"><?php echo $total_users; ?></div>
+                <div class="stat-label">Utilisateurs actifs</div>
             </div>
             <div class="stat-item animate__animated animate__fadeInUp animate__delay-1s">
-                <div class="stat-number">500K+</div>
-                <div class="stat-label">Items Recycled</div>
+                <div class="stat-number"><?php echo $total_locations; ?></div>
+                <div class="stat-label">Lieux de recyclage</div>
             </div>
             <div class="stat-item animate__animated animate__fadeInUp animate__delay-2s">
-                <div class="stat-number">50+</div>
-                <div class="stat-label">Partner Locations</div>
-            </div>
-            <div class="stat-item animate__animated animate__fadeInUp animate__delay-3s">
-                <div class="stat-number">100+</div>
-                <div class="stat-label">Tons Saved</div>
+                <div class="stat-number"><?php echo number_format($total_points); ?></div>
+                <div class="stat-label">Points cumulés</div>
             </div>
         </div>
     </section>
@@ -451,8 +468,8 @@ $welcome_message = "Welcome to CycleBins!";
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-column">
-                <h3>About CycleBins</h3>
-                <p>We're on a mission to make recycling effortless and rewarding for everyone, creating a cleaner planet one bin at a time.</p>
+                <h3>À propos de CycleBins</h3>
+                <p>Nous avons pour mission de rendre le recyclage simple et gratifiant pour tous, en créant une planète plus propre une poubelle à la fois.</p>
                 <div class="social-links">
                     <a href="#"><i class="fab fa-facebook-f"></i></a>
                     <a href="#"><i class="fab fa-twitter"></i></a>
@@ -461,41 +478,40 @@ $welcome_message = "Welcome to CycleBins!";
                 </div>
             </div>
             <div class="footer-column">
-                <h3>Quick Links</h3>
+                <h3>Liens rapides</h3>
                 <ul>
-                    <li><a href="#">Home</a></li>
-                    <li><a href="#">Features</a></li>
-                    <li><a href="#">How It Works</a></li>
-                    <li><a href="#">Testimonials</a></li>
-                    <li><a href="../design_partie_admin/admin.php">Admins</a></li>
-
+                    <li><a href="#">Accueil</a></li>
+                    <li><a href="#">Fonctionnalités</a></li>
+                    <li><a href="#">Comment ça marche</a></li>
+                    <li><a href="#">Témoignages</a></li>
+                    <li><a href="#" onclick="checkAdminPassword()">Administrateurs</a></li>
                 </ul>
             </div>
             <div class="footer-column">
-                <h3>Resources</h3>
+                <h3>Ressources</h3>
                 <ul>
-                    <li><a href="#">Recycling Guide</a></li>
-                    <li><a href="#">Sustainability Tips</a></li>
-                    <li><a href="#">Community Forum</a></li>
+                    <li><a href="#">Guide du recyclage</a></li>
+                    <li><a href="#">Conseils de durabilité</a></li>
+                    <li><a href="#">Forum communautaire</a></li>
                     <li><a href="#">FAQ</a></li>
                 </ul>
             </div>
             <div class="footer-column">
-                <h3>Contact Us</h3>
+                <h3>Contactez-nous</h3>
                 <ul>
                     <li><i class="fas fa-envelope"></i> cyclebins@info.com</li>
                     <li><i class="fas fa-phone"></i> +1 (555) 123-4567</li>
-                    <li><i class="fas fa-map-marker-alt"></i> 123 Green St, Eco City</li>
+                    <li><i class="fas fa-map-marker-alt"></i> 123 Rue Verte, Ville Éco</li>
                 </ul>
             </div>
         </div>
         <div class="copyright">
-            © 2025 CycleBins. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a>
+            © 2025 CycleBins. Tous droits réservés. | <a href="#">Politique de confidentialité</a> | <a href="#">Conditions d'utilisation</a>
         </div>
     </footer>
 
     <script>
-        // Navbar scroll effect
+        // Effet de défilement de la barre de navigation
         window.addEventListener('scroll', function() {
             const navbar = document.getElementById('navbar');
             if (window.scrollY > 50) {
@@ -505,7 +521,7 @@ $welcome_message = "Welcome to CycleBins!";
             }
         });
         
-        // Animate elements when they come into view
+        // Animer les éléments lorsqu'ils apparaissent dans le champ de vision
         const animateOnScroll = function() {
             const elements = document.querySelectorAll('.feature-card, .stat-item, .section-title');
             
@@ -521,6 +537,14 @@ $welcome_message = "Welcome to CycleBins!";
         
         window.addEventListener('scroll', animateOnScroll);
         window.addEventListener('load', animateOnScroll);
+
+        // Vérification du mot de passe pour les administrateurs
+        function checkAdminPassword() {
+            let password = prompt("Veuillez entrer le mot de passe administrateur :");
+            if (password === "1234") {
+                window.location.href = "../design_partie_admin/admin.php";
+            } else {
+                alert("Mot de passe incorrect. Accès refusé.");
+            }
+        }
     </script>
-</body>
-</html>

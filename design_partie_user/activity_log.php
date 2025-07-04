@@ -1,26 +1,33 @@
 <?php
-session_start();
-// Placeholder user data - replace with database queries
-$user_name = "Alex Green";
-$user_email = "alex.green@example.com";
-$user_points = 1250;
-$user_level = "Eco Champion";
-$recent_activity = [
-    ["action" => "Recycled Plastic", "points" => 50, "date" => "2025-06-15"],
-    ["action" => "Recycled Paper", "points" => 30, "date" => "2025-06-14"],
-    ["action" => "Recycled Glass", "points" => 40, "date" => "2025-06-12"],
-    ["action" => "Recycled Aluminum", "points" => 45, "date" => "2025-06-10"],
-    ["action" => "Recycled Cardboard", "points" => 35, "date" => "2025-06-09"],
-    ["action" => "Recycled E-Waste", "points" => 60, "date" => "2025-06-08"],
-    ["action" => "Recycled Textiles", "points" => 25, "date" => "2025-06-07"]
-];
+require_once '../php_partie_user/connection.php'; // Ajuster le chemin si nécessaire
+
+if (!isLoggedIn()) {
+    header("Location: signin.php");
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
+
+// Récupérer les données de l'utilisateur
+$stmt = $pdo->prepare("SELECT username, email, points, level FROM users WHERE user_id = :user_id");
+$stmt->execute([':user_id' => $user_id]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+$user_name = $user['username'] ?? 'Invité';
+$user_email = $user['email'] ?? '';
+$user_points = $user['points'] ?? 0;
+$user_level = $user['level'] ?? 'Eco Débutant';
+
+// Récupérer les activités récentes depuis la base de données
+$stmt = $pdo->prepare("SELECT action, points, date FROM activity_log WHERE user_id = :user_id ORDER BY date DESC LIMIT 7");
+$stmt->execute([':user_id' => $user_id]);
+$recent_activity = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CycleBins - Activity Log</title>
+    <title>CycleBins - Journal d'activité</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -346,7 +353,7 @@ $recent_activity = [
         </div>
         <div class="user-menu" onclick="toggleDialog()">
             <div class="user-profile">
-                <div class="user-avatar"><img src="images/person.jpg" alt="Profile"></div>
+                <div class="user-avatar"><img src="images/person.jpg" alt="Profil"></div>
                 <span class="user-name"><?php echo $user_name; ?></span>
             </div>
         </div>
@@ -355,8 +362,8 @@ $recent_activity = [
     <div class="main-content">
         <div class="dashboard-card">
             <div class="card-header">
-                <h2>Activity Log</h2>
-                <a href="home.php" class="back-button"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+                <h2>Journal d'activité</h2>
+                <a href="home.php" class="back-button"><i class="fas fa-arrow-left"></i> Retour au tableau de bord</a>
             </div>
             <ul class="activity-list">
                 <?php foreach ($recent_activity as $activity): ?>
@@ -376,26 +383,26 @@ $recent_activity = [
     </div>
 
     <div class="user-dialog" id="userDialog">
-        <div class="profile-image"><img src="images/person.jpg" alt="Profile"></div>
+        <div class="profile-image"><img src="images/person.jpg" alt="Profil"></div>
         <div class="user-info">
             <h3><?php echo $user_name; ?></h3>
             <p><?php echo $user_email; ?></p>
         </div>
         <div class="dialog-buttons">
-            <button onclick="alert('Switch Account clicked')">Switch Account</button>
-            <button onclick="alert('Delete Account clicked')" style="color: #f44336;">Delete Account</button>
-            <button onclick="window.location.href='index.php'">Logout</button>
+            <button onclick="alert('Changer de compte cliqué')">Changer de compte</button>
+            <button onclick="alert('Supprimer le compte cliqué')" style="color: #f44336;">Supprimer le compte</button>
+            <button onclick="window.location.href='index.php'">Déconnexion</button>
         </div>
     </div>
 
     <script>
-        // Toggle user dialog
+        // Basculer le dialogue utilisateur
         function toggleDialog() {
             const dialog = document.getElementById('userDialog');
             dialog.classList.toggle('active');
         }
 
-        // Close dialog when clicking outside
+        // Fermer le dialogue en cliquant à l'extérieur
         document.addEventListener('click', function(event) {
             const dialog = document.getElementById('userDialog');
             const userMenu = document.querySelector('.user-menu');
@@ -404,5 +411,3 @@ $recent_activity = [
             }
         });
     </script>
-</body>
-</html>

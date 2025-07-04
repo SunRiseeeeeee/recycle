@@ -1,46 +1,61 @@
 <?php
-require_once '../php_partie_admin/connection_admin.php';
+require_once '../php_partie_user/connection.php';
 
-$login_error = '';
-$signup_error = '';
+$error_message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['username']) && isset($_POST['password'])) {
-        if (isset($_POST['login-form'])) {
-            $username = trim($_POST['username']);
-            $password = trim($_POST['password']);
+    $tab = $_POST['tab'] ?? 'login';
+    $username = $_POST['username'] ?? '';
+    $password = $_POST['password'] ?? '';
+    $confirm_password = $_POST['confirm_password'] ?? '';
+    $email = $_POST['email'] ?? '';
 
-            if (empty($username) || empty($password)) {
-                $login_error = 'Veuillez remplir tous les champs.';
-            } elseif (signinAdmin($username, $password)) {
-                header("Location: admin_home.php");
-                exit();
-            } else {
-                $login_error = 'Nom d\'utilisateur ou mot de passe invalide.';
+    if ($tab === 'login') {
+        if (signinUser($username, $password)) {
+            header("Location: home.php");
+            exit();
+        } else {
+            $error_message = "Nom d'utilisateur ou mot de passe invalide.";
+        }
+    } elseif ($tab === 'signup') {
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username OR email = :email");
+        $stmt->execute([':username' => $username, ':email' => $email]);
+        if ($stmt->fetch()) {
+            $error_message = "Nom d'utilisateur ou email déjà existant.";
+        } elseif ($password !== $confirm_password) {
+            $error_message = "Les mots de passe ne correspondent pas.";
+        } else {
+            // Gestion du téléchargement d'image
+            $profile_image = null;
+            if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
+                $upload_dir = 'uploads/';
+                if (!file_exists($upload_dir)) {
+                    mkdir($upload_dir, 0777, true);
+                }
+                $file_name = uniqid() . '_' . basename($_FILES['profile_image']['name']);
+                $target_file = $upload_dir . $file_name;
+                $image_file_type = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+                $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
+                if (in_array($image_file_type, $allowed_types)) {
+                    if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $target_file)) {
+                        $profile_image = $file_name;
+                    } else {
+                        $error_message = "Erreur lors du téléchargement de l'image.";
+                    }
+                } else {
+                    $error_message = "Seuls les fichiers JPG, JPEG, PNG et GIF sont autorisés.";
+                }
             }
-        } elseif (isset($_POST['signup-form'])) {
-            $username = trim($_POST['username']);
-            $password = trim($_POST['password']);
-            $email = trim($_POST['email']);
-            $full_name = $username; // Utilisation du nom d'utilisateur comme nom complet pour simplifier ; ajuster si nécessaire
 
-            if (empty($username) || empty($password) || empty($email)) {
-                $signup_error = 'Veuillez remplir tous les champs.';
-            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $signup_error = 'Format d\'email invalide.';
-            } elseif ($_FILES['profile_image']['error'] === UPLOAD_ERR_NO_FILE) {
-                $signup_error = 'Veuillez télécharger une image de profil.';
-            } else {
-                // Vérifier si le nom d'utilisateur ou l'email existe déjà
-                $stmt = $pdo->prepare("SELECT COUNT(*) FROM admins WHERE username = :username OR email = :email");
-                $stmt->execute([':username' => $username, ':email' => $email]);
-                if ($stmt->fetchColumn() > 0) {
-                    $signup_error = 'Nom d\'utilisateur ou email déjà existant.';
-                } elseif (signupAdmin($username, $email, $password, $full_name, null)) { // Passer null s'il n'y a pas d'image
-                    header("Location: admin.php"); // Rediriger vers la page de login après inscription réussie
+            if (empty($error_message)) {
+                if (signupUser($username, $email, $password, $username, $profile_image)) { // Passer profile_image si défini
+                    header("Location: signin.php");
                     exit();
                 } else {
-                    $signup_error = 'Inscription échouée. Veuillez réessayer.';
+                    $error_message = "Inscription échouée. Veuillez réessayer.";
+                    if ($profile_image && file_exists($target_file)) {
+                        unlink($target_file); // Nettoyer le fichier téléchargé en cas d'échec
+                    }
                 }
             }
         }
@@ -52,18 +67,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tableau de bord Admin - CycleBins</title>
+    <title>Connexion/Inscription - CycleBins</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #0066cc;
-            --primary-light: rgba(0, 102, 204, 0.1);
-            --secondary: #004080;
-            --accent: #ffab00;
-            --dark: #263238;
-            --light: #f5f9ff;
-            --gray: #e0e9f5;
+            --primary: #00c853; /* Vert vibrant */
+            --primary-light: rgba(0, 200, 83, 0.1);
+            --secondary: #00796b; /* Sable */
+            --accent: #ffab00; /* Ambre */
+            --dark: #263238; /* Bleu-gris foncé */
+            --light: #f5f5f5;
+            --gray: #e0e0e0;
             --gradient: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
         }
         
@@ -130,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 6rem 2rem 4rem;
         }
         
-        .admin-container {
+        .login-container {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -142,14 +157,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             animation: animate__fadeInUp 0.5s;
         }
         
-        .admin-header {
+        .login-header {
             background: var(--gradient);
             color: white;
             padding: 2rem;
             text-align: center;
         }
         
-        .admin-header h2 {
+        .login-header h2 {
             font-size: 1.8rem;
             margin-bottom: 0.5rem;
             display: flex;
@@ -158,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             gap: 0.75rem;
         }
         
-        .admin-header p {
+        .login-header p {
             opacity: 0.9;
             font-size: 0.95rem;
         }
@@ -219,10 +234,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background: rgba(255, 255, 255, 0.8);
         }
         
-        .form-group input:focus {
+        .form-group input:focus,
+        .form-group input[type="file"]:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.2);
+            box-shadow: 0 0 0 3px rgba(0, 200, 83, 0.2);
         }
         
         .submit-btn {
@@ -245,7 +261,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .submit-btn:hover {
             background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 102, 204, 0.2);
+            box-shadow: 0 5px 15px rgba(0, 200, 83, 0.2);
         }
         
         .error-message {
@@ -253,7 +269,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 0.9rem;
             margin-top: 1rem;
             text-align: center;
-            display: none;
+            display: <?php echo $error_message ? 'block' : 'none'; ?>;
         }
         
         .form-wrapper {
@@ -301,11 +317,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         @media (max-width: 576px) {
-            .admin-container {
+            .login-container {
                 max-width: 100%;
             }
             
-            .admin-header {
+            .login-header {
                 padding: 1.5rem;
             }
             
@@ -332,10 +348,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <div class="main-container">
-        <div class="admin-container animate__animated animate__fadeInUp">
-            <div class="admin-header">
-                <h2><i class="fas fa-user-shield"></i> Tableau de bord Admin</h2>
-                <p>Accédez au tableau de bord d'administration de CycleBins</p>
+        <div class="login-container animate__animated animate__fadeInUp">
+            <div class="login-header">
+                <h2><i class="fas fa-user"></i> Accès utilisateur</h2>
+                <p>Connectez-vous ou inscrivez-vous pour commencer à recycler avec CycleBins</p>
             </div>
             
             <div class="tab-buttons">
@@ -349,10 +365,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             <div class="form-container">
                 <form id="login-form" class="form-wrapper active" action="" method="post">
-                    <input type="hidden" name="login-form" value="1">
+                    <input type="hidden" name="tab" value="login">
                     <div class="form-group">
                         <label for="login-username"><i class="fas fa-user"></i> Nom d'utilisateur</label>
-                        <input type="text" id="login-username" name="username" placeholder="Entrez votre nom d'utilisateur" required value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>">
+                        <input type="text" id="login-username" name="username" placeholder="Entrez votre nom d'utilisateur" required>
                     </div>
                     
                     <div class="form-group">
@@ -360,8 +376,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="password" id="login-password" name="password" placeholder="Entrez votre mot de passe" required>
                     </div>
                     
-                    <div id="login-error" class="error-message" style="display: <?php echo $login_error ? 'block' : 'none'; ?>;">
-                        <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($login_error); ?>
+                    <div id="login-error" class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> <?php echo $error_message; ?>
                     </div>
                     
                     <button type="submit" class="submit-btn">
@@ -370,10 +386,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </form>
                 
                 <form id="signup-form" class="form-wrapper" action="" method="post" enctype="multipart/form-data">
-                    <input type="hidden" name="signup-form" value="1">
+                    <input type="hidden" name="tab" value="signup">
                     <div class="form-group">
                         <label for="signup-username"><i class="fas fa-user"></i> Nom d'utilisateur</label>
-                        <input type="text" id="signup-username" name="username" placeholder="Choisissez un nom d'utilisateur" required value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>">
+                        <input type="text" id="signup-username" name="username" placeholder="Choisissez un nom d'utilisateur" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signup-email"><i class="fas fa-envelope"></i> Email</label>
+                        <input type="email" id="signup-email" name="email" placeholder="Votre adresse email" required>
                     </div>
                     
                     <div class="form-group">
@@ -382,21 +403,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     
                     <div class="form-group">
-                        <label for="signup-email"><i class="fas fa-envelope"></i> Email</label>
-                        <input type="email" id="signup-email" name="email" placeholder="Votre adresse email" required value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
+                        <label for="signup-confirm-password"><i class="fas fa-lock"></i> Confirmer le mot de passe</label>
+                        <input type="password" id="signup-confirm-password" name="confirm_password" placeholder="Confirmez votre mot de passe" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="profile_image"><i class="fas fa-image"></i> Image de profil</label>
-                        <input type="file" id="profile_image" name="profile_image" accept="image/*" required>
+                        <input type="file" id="profile_image" name="profile_image" accept="image/jpeg,image/png,image/gif">
                     </div>
                     
-                    <div id="signup-error" class="error-message" style="display: <?php echo $signup_error ? 'block' : 'none'; ?>;">
-                        <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($signup_error); ?>
+                    <div id="signup-error" class="error-message">
+                        <i class="fas fa-exclamation-circle"></i> <?php echo $error_message; ?>
                     </div>
                     
                     <button type="submit" class="submit-btn">
-                        <i class="fas fa-user-plus"></i> Créer un compte
+                        <i class="fas fa-user-plus"></i> S'inscrire
                     </button>
                 </form>
             </div>
@@ -404,7 +425,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <div class="footer">
-        <div>© 2023 CycleBins. Tous droits réservés.</div>
+        <div>© 2025 CycleBins. Tous droits réservés.</div>
         <div class="social-links">
             <a href="#"><i class="fab fa-facebook-f"></i></a>
             <a href="#"><i class="fab fa-twitter"></i></a>
@@ -417,14 +438,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <script>
         function showTab(tab) {
-            document.querySelectorAll('.tab-button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.currentTarget.classList.add('active');
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.tab-button[onclick="showTab('${tab}')"]`).classList.add('active');
             
             document.getElementById('login-form').classList.remove('active');
             document.getElementById('signup-form').classList.remove('active');
-            document.getElementById(tab + '-form').classList.add('active');
+            document.getElementById(`${tab}-form`).classList.add('active');
             
             document.getElementById('login-error').style.display = 'none';
             document.getElementById('signup-error').style.display = 'none';
